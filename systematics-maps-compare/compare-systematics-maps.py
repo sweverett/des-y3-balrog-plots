@@ -206,6 +206,7 @@ density_dx = {
     'exp_time_i' : 25
 }
 
+print('Starting density plots')
 map_plots.plot_map_densities(mapfiles, bal, gld, xlim=density_xlim, dx=density_dx, vb=vb)
 
 # Trend Plots
@@ -236,5 +237,6 @@ trend_dx = {
     'exp_time_i' : 200
 }
 
+print('Starting trend plots')
 map_plots.plot_map_trends(mapfiles, bal, gld, xlim=trend_xlim, dx=trend_dx, vb=vb)
 
