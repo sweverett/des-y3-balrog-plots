@@ -1,6 +1,7 @@
 import numpy as np
 import fitsio
 import os
+import ntpath
 from astropy.table import Table
 import healpy as hp
 import map_plots
@@ -95,7 +96,9 @@ def add_maps_to_catalog(catalog, mapfile_dict, ratag='ra', dectag='dec', map_pat
                 else:
                     order_in = 'RING'
 
-                fname.replace(f'/{NSIDE_OUT}', '').replace(str(NSIDE_OUT), str(NSIDE_MAP))
+                print('fname:',fname)
+                fname = fname.replace(f'/{NSIDE_OUT}/', '/')
+                fname = fname.replace(str(NSIDE_OUT), str(NSIDE_MAP))
                 hmap = fitsio.read(fname)
                 hmap = rescale_hp_map(hmap, nside_map, nside_out)
                 
@@ -106,7 +109,7 @@ def add_maps_to_catalog(catalog, mapfile_dict, ratag='ra', dectag='dec', map_pat
                     os.mkdir(outdir)
                 base = ntpath.basename(fname).replace(str(NSIDE_MAP), str(NSIDE_OUT))
                 outfile = os.path.join(outdir, base)
-                fitiso.write(outfile, hmap)
+                fitsio.write(outfile, hmap)
 
             else:
                 raise e 
