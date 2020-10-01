@@ -39,7 +39,7 @@ for mname, mfile in maps.items():
     if NSIDE_OUT == NSIDE_MAP:
         mapfiles[mname] = os.path.join(mapdir, mfile)
     else:
-        mfile.replace(str(NSIDE_MAP), str(NSIDE_OUT))
+        mfile = mfile.replace(str(NSIDE_MAP), str(NSIDE_OUT))
         mapfiles[mname] = os.path.join(mapdir, str(NSIDE_OUT), mfile)
 
 ## Modified functions from E Huff from E Suchyta
