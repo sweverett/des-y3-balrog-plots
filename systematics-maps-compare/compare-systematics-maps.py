@@ -11,6 +11,8 @@ import pdb
 make_plots = ['density', 'trends']
 #make_plots = ['trends']
 
+show_plots = False
+
 bal_file = '/data/des81.a/data/severett/paper-plots/cats/gold-compare/balrog_sof_galaxy_compare.fits'
 gld_cache_file = '/data/des81.a/data/severett/paper-plots/cats/systematics-maps-compare/y3_gold_2_2_galaxy_compare_healpy.fits'
 
@@ -129,19 +131,19 @@ for mname, mfile in maps.items():
 
 # Read in same catalogs as galaxy-compare:
 print('Reading Balrog...')
-bal_cols = ['meas_ra', 'meas_dec', 'meas_tilename']
+bal_cols = ['meas_ra', 'meas_dec', 'meas_tilename', 'meas_EXTENDED_CLASS_SOF']
 bal = Table(fitsio.read(bal_file, columns=bal_cols))
 
 print('Reading GOLD...')
 try:
-    gld_cols = ['RA', 'DEC', 'TILENAME']
+    gld_cols = ['RA', 'DEC', 'TILENAME', 'EXTENDED_CLASS_SOF']
     gld = Table(fitsio.read(gld_cache_file, columns=gld_cols))
 
 except OSError:
-    print('Could not find cached GOLD file, creating new one from scratch (may take a few hours)')
+    print('Could not find cached GOLD file, creating new one from scratch (will take some time)')
+    print('Reading in base GOLD catalog...')
     # Create GOLD file w/ Balrog mask
     gld_file = '/data/des81.a/data/severett/db_queries/y3_gold_2_2_galaxy_compare/s2n/y3_gold_2_2_galaxy_compare_basic_sof_s2n_collated.fits'
-    gld_cols = ['RA', 'DEC', 'TILENAME']
     gld = Table(fitsio.read(gld_file, columns=gld_cols))
     
     # Need to cut GOLD to same tile footprint as Balrog
@@ -149,19 +151,11 @@ except OSError:
     Ntiles = len(tiles)
     print(f'Found {Ntiles} unique tiles')
 
-    gld['IN_BAL_FOOTPRINT'] = np.zeros(len(gld))
-
     print('Checking for objects in Balrog footprint...')
+    in_bal_footprint = np.isin(gld['TILENAME'], tiles)
 
-    k = 0
-    for tile in tiles:
-        k += 1
-        if vb is True:
-            print(f'Tile {tile} ({k} of {Ntiles})')
-        gld['IN_BAL_FOOTPRINT'][gld['TILENAME'] == tile] = 1
-
-    print('Making cuts...')
-    gld = gld[gld['IN_BAL_FOOTPRINT'] == 1]
+    print('Cutting objects...')
+    gld = gld[in_bal_footprint]
 
     print('Writing...')
     gld.write(gld_cache_file, overwrite=overwrite)
@@ -184,29 +178,21 @@ add_maps_to_catalog(gld, mapfiles, nside_map=NSIDE_MAP,
 # the edge of tiles, there are still some differences in pixels.
 # Cleanest to only compare pixels with both bal & gld present
 
-
-#pdb.set_trace()
 bal_pix_indices = bal[list(mapfiles.keys())[0]+'_index']
 gld_pix_indices = gld[list(mapfiles.keys())[0]+'_index']
 
 gld_in_bal_pixels = np.isin(gld_pix_indices, bal_pix_indices)
-bal_in_gld_pixels = np.isin(bal_pix_indices, bal_pix_indices)
 
+Ngld_before = len(gld)
+gld = gld[gld_in_bal_pixels]
 
-#common_pix, common_ind_bal, common_ind_gld = np.intersect1d(
-#    bal_pix_indices, gld_pix_indices, return_indices=True
-#)
+# Now recompute GOLD pixels to match to Balrog
+gld_pix_indices = gld[list(mapfiles.keys())[0]+'_index']
+
+bal_in_gld_pixels = np.isin(bal_pix_indices, gld_pix_indices)
 
 Nbal_before = len(bal)
-Ngld_before = len(gld)
-
-gld = gld[gld_in_bal_pixels]
 bal = bal[bal_in_gld_pixels]
-
-#print('There are {} gld pixels with 0 objects')
-
-#bal = bal[common_ind_x]
-#gld = gld[common_ind_y]
 
 Nbal_after = len(bal)
 Ngld_after = len(gld)
@@ -216,6 +202,8 @@ print(f'GOLD objects before & after selecting common pixels: {Ngld_before} -> {N
 
 # -------------------------------------------------------------
 # Plots
+
+plot_outdir = os.path.join('plots', str(NSIDE_OUT))
 
 # Density plots
 
@@ -247,7 +235,8 @@ density_dx = {
 
 if 'density' in make_plots:
     print('Starting density plots')
-    map_plots.plot_map_densities(mapfiles, bal, gld, xlim=density_xlim, dx=density_dx, vb=vb)
+    map_plots.plot_map_densities(mapfiles, bal, gld, xlim=density_xlim, dx=density_dx,
+                                 outdir=plot_outdir, vb=vb, show=show_plots)
 
 # Trend Plots
 
@@ -279,5 +268,6 @@ trend_dx = {
 
 if 'trends' in make_plots:
     print('Starting trend plots')
-    map_plots.plot_map_trends(mapfiles, bal, gld, xlim=trend_xlim, dx=trend_dx, vb=vb)
+    map_plots.plot_map_trends(mapfiles, bal, gld, xlim=trend_xlim, dx=trend_dx,
+                              outdir=plot_outdir, vb=vb, show=show_plots)
 
