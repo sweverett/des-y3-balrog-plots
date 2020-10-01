@@ -6,7 +6,7 @@ import healpy as hp
 import map_plots
 
 bal_file = '/data/des81.a/data/severett/paper-plots/cats/gold-compare/balrog_sof_galaxy_compare.fits'
-gld_cache_file = '/data/des81.a/data/severett/paper-plots/cats/systematics-maps/y3_gold_2_2_galaxy_compare_healpy.fits'
+gld_cache_file = '/data/des81.a/data/severett/paper-plots/cats/compare-systematics-maps/y3_gold_2_2_galaxy_compare_healpy.fits'
 
 vb = True
 overwrite = True
