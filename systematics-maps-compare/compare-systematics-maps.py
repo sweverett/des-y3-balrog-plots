@@ -6,7 +6,7 @@ import healpy as hp
 import map_plots
 
 bal_file = '/data/des81.a/data/severett/paper-plots/cats/gold-compare/balrog_sof_galaxy_compare.fits'
-gld_cache_file = '/data/des81.a/data/severett/paper-plots/cats/compare-systematics-maps/y3_gold_2_2_galaxy_compare_healpy.fits'
+gld_cache_file = '/data/des81.a/data/severett/paper-plots/cats/systematics-maps-compare/y3_gold_2_2_galaxy_compare_healpy.fits'
 
 vb = True
 overwrite = True
@@ -106,6 +106,7 @@ try:
     gld = Table(fitsio.read(gld_cache_file, columns=gld_cols))
 
 except OSError:
+    print('Could not find cached GOLD file, creating new one from scratch (may take a few hours)')
     # Create GOLD file w/ Balrog mask
     gld_file = '/data/des81.a/data/severett/db_queries/y3_gold_2_2_galaxy_compare/s2n/y3_gold_2_2_galaxy_compare_basic_sof_s2n_collated.fits'
     gld_cols = ['RA', 'DEC', 'TILENAME']
