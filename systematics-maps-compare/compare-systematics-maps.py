@@ -6,7 +6,10 @@ from astropy.table import Table
 import healpy as hp
 import map_plots
 
+import pdb
+
 make_plots = ['density', 'trends']
+#make_plots = ['trends']
 
 bal_file = '/data/des81.a/data/severett/paper-plots/cats/gold-compare/balrog_sof_galaxy_compare.fits'
 gld_cache_file = '/data/des81.a/data/severett/paper-plots/cats/systematics-maps-compare/y3_gold_2_2_galaxy_compare_healpy.fits'
@@ -15,7 +18,7 @@ vb = True
 overwrite = True
 
 NSIDE_MAP = 4096
-NSIDE_OUT = 2048
+NSIDE_OUT = [2048]
 nest = True
 partial = True
 
@@ -35,14 +38,6 @@ maps = {
 
 # TODO: Generalize eventually
 mapdir = '/data/des81.a/data/severett/paper-plots/desy3-balrog-plots/systematics-maps-compare/maps'
-
-mapfiles = {}
-for mname, mfile in maps.items():
-    if NSIDE_OUT == NSIDE_MAP:
-        mapfiles[mname] = os.path.join(mapdir, mfile)
-    else:
-        mfile = mfile.replace(str(NSIDE_MAP), str(NSIDE_OUT))
-        mapfiles[mname] = os.path.join(mapdir, str(NSIDE_OUT), mfile)
 
 ## Modified functions from E Huff from E Suchyta
 def hpRaDecToHEALPixel(ra, dec, nside=4096, nest=True):
@@ -124,6 +119,14 @@ def add_maps_to_catalog(catalog, mapfile_dict, ratag='ra', dectag='dec', map_pat
 
     return
 
+mapfiles = {}
+for mname, mfile in maps.items():
+    if NSIDE_OUT == NSIDE_MAP:
+        mapfiles[mname] = os.path.join(mapdir, mfile)
+    else:
+        mfile = mfile.replace(str(NSIDE_MAP), str(NSIDE_OUT))
+        mapfiles[mname] = os.path.join(mapdir, str(NSIDE_OUT), mfile)
+
 # Read in same catalogs as galaxy-compare:
 print('Reading Balrog...')
 bal_cols = ['meas_ra', 'meas_dec', 'meas_tilename']
@@ -176,6 +179,40 @@ print('Adding systematics maps to GOLD...')
 add_maps_to_catalog(gld, mapfiles, nside_map=NSIDE_MAP,
                     nside_out=NSIDE_OUT,
                     ratag='RA', dectag='DEC', vb=vb)
+
+# Due to differences in number density and injection gaps on 
+# the edge of tiles, there are still some differences in pixels.
+# Cleanest to only compare pixels with both bal & gld present
+
+
+#pdb.set_trace()
+bal_pix_indices = bal[list(mapfiles.keys())[0]+'_index']
+gld_pix_indices = gld[list(mapfiles.keys())[0]+'_index']
+
+gld_in_bal_pixels = np.isin(gld_pix_indices, bal_pix_indices)
+bal_in_gld_pixels = np.isin(bal_pix_indices, bal_pix_indices)
+
+
+#common_pix, common_ind_bal, common_ind_gld = np.intersect1d(
+#    bal_pix_indices, gld_pix_indices, return_indices=True
+#)
+
+Nbal_before = len(bal)
+Ngld_before = len(gld)
+
+gld = gld[gld_in_bal_pixels]
+bal = bal[bal_in_gld_pixels]
+
+#print('There are {} gld pixels with 0 objects')
+
+#bal = bal[common_ind_x]
+#gld = gld[common_ind_y]
+
+Nbal_after = len(bal)
+Ngld_after = len(gld)
+
+print(f'Balrog objects before & after selecting common pixels: {Nbal_before} -> {Nbal_after}')
+print(f'GOLD objects before & after selecting common pixels: {Ngld_before} -> {Ngld_after}')
 
 # -------------------------------------------------------------
 # Plots
