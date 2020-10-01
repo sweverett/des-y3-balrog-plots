@@ -19,6 +19,8 @@ gld_cache_file = '/data/des81.a/data/severett/paper-plots/cats/systematics-maps-
 vb = True
 overwrite = True
 
+remove_stars = True # Cut on EXTENDED_CLASS_SOF > 1
+
 NSIDE_MAP = 4096
 NSIDE_OUT = 2048
 nest = True
@@ -29,9 +31,12 @@ maps = {
         'fwhm_r': 'y3a2_r_o.4096_t.32768_FWHM.WMEAN_EQU.fits.gz',
         'fwhm_i': 'y3a2_i_o.4096_t.32768_FWHM.WMEAN_EQU.fits.gz',
         'fwhm_z': 'y3a2_z_o.4096_t.32768_FWHM.WMEAN_EQU.fits.gz',
+        'airmass_g': 'y3a2_g_o.4096_t.32768_AIRMASS.WMEAN_EQU.fits.gz',
+        'airmass_r': 'y3a2_r_o.4096_t.32768_AIRMASS.WMEAN_EQU.fits.gz',
         'airmass_i': 'y3a2_i_o.4096_t.32768_AIRMASS.WMEAN_EQU.fits.gz',
+        'airmass_z': 'y3a2_z_o.4096_t.32768_AIRMASS.WMEAN_EQU.fits.gz',
         'skyvar_i': 'y3a2_i_o.4096_t.32768_SKYVAR.UNCERTAINTY_EQU.fits.gz',
-#         'sig_zp_i' : 'y3a2_i_o.4096_t.32768_SIGMA_MAG_ZERO.QSUM_EQU.fits.gz',
+        'sig_zp_i' : 'y3a2_i_o.4096_t.32768_SIGMA_MAG_ZERO.QSUM_EQU.fits.gz',
         'skybrite_i' : 'y3a2_i_o.4096_t.32768_SKYBRITE.WMEAN_EQU.fits.gz',
         'exp_time_i' : 'y3a2_i_o.4096_t.32768_EXPTIME.SUM_EQU.fits.gz'
 #         'det_frac_i' : 'y3a2_griz_o.4096_t.32768_coverfoot_EQU.fits.gz'
@@ -162,6 +167,11 @@ except OSError:
 
     print('GOLD catalog w/ Balrog mask written!')
 
+# Optional: Remove stars
+if remove_stars is True:
+    bal = bal[bal['meas_EXTENDED_CLASS_SOF'] > 1]
+    gld = gld[gld['EXTENDED_CLASS_SOF'] > 1]
+
 # Add maps to catalogs
 
 print('Adding systematics maps to Balrog...')
@@ -212,11 +222,14 @@ density_xlim = {
     'fwhm_r' : [0.8, 1.2],
     'fwhm_i' : [0.75, 1.2],
     'fwhm_z' : [0.75, 1.2],
+    'airmass_g' : [1., 1.4],
+    'airmass_r' : [1., 1.4],
     'airmass_i' : [1., 1.4],
+    'airmass_z' : [1., 1.4],
     'skyvar_i' : [5, 15],
     'skybrite_i' : [2000, 5000],
     'det_frac_i' : [0.75, 1.],
-    'sig_zp_i' : None,
+    'sig_zp_i' : [.005, .015],
     'exp_time_i' : [0, 800]
 }
 
@@ -225,18 +238,22 @@ density_dx = {
     'fwhm_r' : 0.0125,
     'fwhm_i' : 0.0125,
     'fwhm_z' : 0.0125,
+    'airmass_g' : 0.025,
+    'airmass_r' : 0.025,
     'airmass_i' : 0.025,
+    'airmass_z' : 0.025,
     'skyvar_i' : 0.25,
     'skybrite_i' : 100,
     'det_frac_i' : .05,
-    'sig_zp_i' : None,
+    'sig_zp_i' : .0025,
     'exp_time_i' : 25
 }
 
 if 'density' in make_plots:
     print('Starting density plots')
     map_plots.plot_map_densities(mapfiles, bal, gld, xlim=density_xlim, dx=density_dx,
-                                 outdir=plot_outdir, vb=vb, show=show_plots)
+                                 outdir=plot_outdir, vb=vb, show=show_plots,
+                                 nside=NSIDE_OUT, remove_stars=remove_stars)
 
 # Trend Plots
 
@@ -245,11 +262,14 @@ trend_xlim = {
     'fwhm_r' : [0.8, 1.2],
     'fwhm_i' : [0.8, 1.2],
     'fwhm_z' : [0.8, 1.2],
+    'airmass_g' : [1., 1.4],
+    'airmass_r' : [1., 1.4],
     'airmass_i' : [1., 1.4],
+    'airmass_z' : [1., 1.4],
     'skyvar_i' : [5, 15],
     'skybrite_i' : [2000, 5000],
     'det_frac_i' : [0.75, 1.],
-    'sig_zp_i' : None,
+    'sig_zp_i' : [.005, .015],
     'exp_time_i' : [0, 800]
 }
 
@@ -258,16 +278,20 @@ trend_dx = {
     'fwhm_r' : 0.1,
     'fwhm_i' : 0.1,
     'fwhm_z' : 0.1,
-    'airmass_i' : 0.1,
+    'airmass_g' : 0.025,
+    'airmass_r' : 0.025,
+    'airmass_i' : 0.025,
+    'airmass_z' : 0.025,
     'skyvar_i' : 2.5,
     'skybrite_i' : 500,
     'det_frac_i' : .05,
-    'sig_zp_i' : None,
+    'sig_zp_i' : .0025,
     'exp_time_i' : 200
 }
 
 if 'trends' in make_plots:
     print('Starting trend plots')
     map_plots.plot_map_trends(mapfiles, bal, gld, xlim=trend_xlim, dx=trend_dx,
-                              outdir=plot_outdir, vb=vb, show=show_plots)
+                              outdir=plot_outdir, vb=vb, show=show_plots,
+                              nside=NSIDE_OUT, remove_stars=remove_stars)
 

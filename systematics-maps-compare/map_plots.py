@@ -9,9 +9,10 @@ sb.set_context("notebook", font_scale=1.5)
 
 def plot_map_densities(mapfiles, bal, gld, xlim=None, dx=None, 
                        w=0.1, h=0.25, s=[16, 10], show=True, vb=False,
+                       nside=None, remove_stars=False,
                        outdir='plots', outfile='systematics-density-compare.png'):
     sb.set_style('whitegrid')
-    
+
     if xlim is None:
         xlim = {
             'fwhm_g' : [0.8, 1.5],
@@ -40,7 +41,7 @@ def plot_map_densities(mapfiles, bal, gld, xlim=None, dx=None,
             'exp_time_i' : 25
         }
     
-    Nrows, Ncols = 2, 4
+    Nrows, Ncols = 3, 4
     
     fig, axes = plt.subplots(nrows=Nrows, ncols=Ncols)
     
@@ -95,6 +96,17 @@ def plot_map_densities(mapfiles, bal, gld, xlim=None, dx=None,
     if not os.path.exists(outdir):
         os.mkdir(outdir)
 
+    title = ''
+    if nside is not None:
+        title = str(nside)
+        outfile = outfile.replace('.png', 'f_{nside}.png')
+    if remove_stars is True:
+        title += ', EXTENDED_CLASS_SOF > 1'
+        outfile = outfile.replace('.png', '_no_stars.png')
+
+    if title != '':
+        plt.title(title)
+
     plt.savefig(os.path.join(outdir, outfile))
 
     if show is True:
@@ -104,6 +116,7 @@ def plot_map_densities(mapfiles, bal, gld, xlim=None, dx=None,
 
 def plot_map_trends(mapfiles, bal, gld, xlim=None, dx=None,
                     w=0.3, h=0.25, s=[18, 10], show=True, vb=False,
+                    nside=None, remove_stars=False,
                     outdir='plots', outfile='systematics-trend-compare.png'):
     sb.set_style('whitegrid')
 
@@ -218,7 +231,7 @@ def plot_map_trends(mapfiles, bal, gld, xlim=None, dx=None,
             axes.append(plt.subplot(Nrows, Ncols, k))
         
         plt.errorbar(bin_mean[mname], bal_ratio[mname], bal_err[mname], label=lbal, lw=2, marker='o')
-        plt.errorbar(bin_mean[mname], gld_ratio[mname], gld_err[mname], label=lgld, lw=2, marker='o')
+        plt.errorbar(bin_mean[mname], gld_ratio[mname], gld_err[mname], label=lgld, lw=2, marker='o', color='k')
         plt.axhline(1, lw=3, ls='--', c='k')
         
         plt.xlabel(mname)
@@ -237,6 +250,15 @@ def plot_map_trends(mapfiles, bal, gld, xlim=None, dx=None,
 
     if not os.path.exists(outdir):
         os.mkdir(outdir)
+
+    title = ''
+    if nside is not None:
+        title = str(nside)
+    if remove_stars is True:
+        title += ', EXTENDED_CLASS_SOF > 1'
+
+    if title != '':
+        plt.title(title)
 
     plt.savefig(os.path.join(outdir, outfile))
 
