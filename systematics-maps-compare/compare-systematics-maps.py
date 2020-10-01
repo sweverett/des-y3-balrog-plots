@@ -18,7 +18,7 @@ vb = True
 overwrite = True
 
 NSIDE_MAP = 4096
-NSIDE_OUT = [2048]
+NSIDE_OUT = 2048
 nest = True
 partial = True
 
