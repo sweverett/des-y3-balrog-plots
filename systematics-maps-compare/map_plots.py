@@ -99,7 +99,7 @@ def plot_map_densities(mapfiles, bal, gld, xlim=None, dx=None,
     title = ''
     if nside is not None:
         title = str(nside)
-        outfile = outfile.replace('.png', 'f_{nside}.png')
+        outfile = outfile.replace('.png', f'{nside}.png')
     if remove_stars is True:
         title += ', EXTENDED_CLASS_SOF > 1'
         outfile = outfile.replace('.png', '_no_stars.png')
