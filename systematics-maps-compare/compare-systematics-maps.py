@@ -6,6 +6,8 @@ from astropy.table import Table
 import healpy as hp
 import map_plots
 
+make_plots = ['density', 'trends']
+
 bal_file = '/data/des81.a/data/severett/paper-plots/cats/gold-compare/balrog_sof_galaxy_compare.fits'
 gld_cache_file = '/data/des81.a/data/severett/paper-plots/cats/systematics-maps-compare/y3_gold_2_2_galaxy_compare_healpy.fits'
 
@@ -206,8 +208,9 @@ density_dx = {
     'exp_time_i' : 25
 }
 
-print('Starting density plots')
-map_plots.plot_map_densities(mapfiles, bal, gld, xlim=density_xlim, dx=density_dx, vb=vb)
+if 'density' in make_plots:
+    print('Starting density plots')
+    map_plots.plot_map_densities(mapfiles, bal, gld, xlim=density_xlim, dx=density_dx, vb=vb)
 
 # Trend Plots
 
@@ -237,6 +240,7 @@ trend_dx = {
     'exp_time_i' : 200
 }
 
-print('Starting trend plots')
-map_plots.plot_map_trends(mapfiles, bal, gld, xlim=trend_xlim, dx=trend_dx, vb=vb)
+if 'trends' in make_plots:
+    print('Starting trend plots')
+    map_plots.plot_map_trends(mapfiles, bal, gld, xlim=trend_xlim, dx=trend_dx, vb=vb)
 
