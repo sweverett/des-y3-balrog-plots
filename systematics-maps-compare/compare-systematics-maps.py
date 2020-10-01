@@ -5,6 +5,9 @@ from astropy.table import Table
 import healpy as hp
 import map_plots
 
+bal_file = '/data/des81.a/data/severett/paper-plots/cats/gold-compare/balrog_sof_galaxy_compare.fits'
+gld_cache_file = '/data/des81.a/data/severett/paper-plots/cats/systematics-maps/y3_gold_2_2_galaxy_compare_healpy.fits'
+
 vb = True
 overwrite = True
 
@@ -94,12 +97,10 @@ def add_maps_to_catalog(catalog, mapfile_dict, ratag='ra', dectag='dec', map_pat
 
 # Read in same catalogs as galaxy-compare:
 print('Reading Balrog...')
-bal_file = '/data/des81.a/data/severett/paper-plots/gold-compare/balrog_sof_galaxy_compare.fits'
 bal_cols = ['meas_ra', 'meas_dec', 'meas_tilename']
 bal = Table(fitsio.read(bal_file, columns=bal_cols))
 
 print('Reading GOLD...')
-gld_cache_file = './y3_gold_2_2_galaxy_compare_healpy.fits'
 try:
     gld_cols = ['RA', 'DEC', 'TILENAME']
     gld = Table(fitsio.read(gld_cache_file, columns=gld_cols))
@@ -177,7 +178,7 @@ density_dx = {
     'exp_time_i' : 25
 }
 
-map_plots.plot_map_densities(mapfiles, bal, gld, xlim=density_xlim, dx=density_dx)
+map_plots.plot_map_densities(mapfiles, bal, gld, xlim=density_xlim, dx=density_dx, vb=vb)
 
 # Trend Plots
 
@@ -207,5 +208,5 @@ trend_dx = {
     'exp_time_i' : 200
 }
 
-map_plots.plot_map_trends(mapfiles, bal, gld, xlim=trend_xlim, dx=trend_dx)
+map_plots.plot_map_trends(mapfiles, bal, gld, xlim=trend_xlim, dx=trend_dx, vb=vb)
 

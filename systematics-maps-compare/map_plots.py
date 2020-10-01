@@ -103,7 +103,7 @@ def plot_map_densities(mapfiles, bal, gld, xlim=None, dx=None,
     return
 
 def plot_map_trends(mapfiles, bal, gld, xlim=None, dx=None,
-                    w=0.3, h=0.25, s=[18, 10], show=True,
+                    w=0.3, h=0.25, s=[18, 10], show=True, vb=False,
                     outdir='plots', outfile='systematics-trend-compare.png'):
     sb.set_style('whitegrid')
 
