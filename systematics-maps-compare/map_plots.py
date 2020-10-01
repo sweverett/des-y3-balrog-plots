@@ -8,7 +8,7 @@ plt.style.use('seaborn')
 sb.set_context("notebook", font_scale=1.5)
 
 def plot_map_densities(mapfiles, bal, gld, xlim=None, dx=None, 
-                       w=0.1, h=0.25, s=[16, 10], show=True,
+                       w=0.1, h=0.25, s=[16, 10], show=True, vb=False,
                        outdir='plots', outfile='systematics-density-compare.png'):
     sb.set_style('whitegrid')
     

@@ -30,12 +30,16 @@ maps = {
 #         'stellar_density' : 'psf_stellar_density_fracdet_binned_1024_nside_4096_cel.fits.gz'
 }
 
-mapdir = './maps/'
+# TODO: Generalize eventually
+mapdir = '/data/des81.a/data/severett/paper-plots/desy3-balrog-plots/systematics-maps-compare/maps'
 
 mapfiles = {}
 for mname, mfile in maps.items():
-    mapfiles[mname] = os.path.join(mapdir, mfile)
-
+    if NSIDE_OUT == NSIDE_MAP:
+        mapfiles[mname] = os.path.join(mapdir, mfile)
+    else:
+        mfile.replace(str(NSIDE_MAP), str(NSIDE_OUT))
+        mapfiles[mname] = os.path.join(mapdir, str(NSIDE_OUT), mfile)
 
 ## Modified functions from E Huff from E Suchyta
 def hpRaDecToHEALPixel(ra, dec, nside=4096, nest=True):
@@ -75,17 +79,37 @@ def add_maps_to_catalog(catalog, mapfile_dict, ratag='ra', dectag='dec', map_pat
         print (f'Adding map {iname} ({k} of {nmaps})')
         fname = mapfile_dict[iname]
         
-        hmap = fitsio.read(fname)
-        
-        # Rescale map
-        if nside_map != nside_out:
-            if vb is True:
-                print(f'Rescaling map to {nside_out}')
-            if nest is True:
-                order_in = 'NEST'
+        try:
+            hmap = fitsio.read(fname)
+
+        except OSError as e:
+            if NSIDE_OUT == 4096:
+                raise OSError('That systematics map is not in the "maps" directory!')
+
+            if nside_map != nside_out:
+        	# Rescale map
+                if vb is True:
+                    print(f'Rescaling map to {nside_out}')
+                if nest is True:
+                    order_in = 'NEST'
+                else:
+                    order_in = 'RING'
+
+                fname.replace(f'/{NSIDE_OUT}', '').replace(str(NSIDE_OUT), str(NSIDE_MAP))
+                hmap = fitsio.read(fname)
+                hmap = rescale_hp_map(hmap, nside_map, nside_out)
+                
+                # Now cache map for future use
+                print('Caching map...')
+                outdir = os.path.join('maps', str(NSIDE_OUT))
+                if not os.path.exists(outdir):
+                    os.mkdir(outdir)
+                base = ntpath.basename(fname).replace(str(NSIDE_MAP), str(NSIDE_OUT))
+                outfile = os.path.join(outdir, base)
+                fitiso.write(outfile, hmap)
+
             else:
-                order_in = 'RING'
-            hmap = rescale_hp_map(hmap, nside_map, nside_out)
+                raise e 
                 
         hmap_big = np.zeros(hp.nside2npix(nside_out)) + hp.UNSEEN
         hmap_big[hmap['PIXEL']] = hmap['SIGNAL']
