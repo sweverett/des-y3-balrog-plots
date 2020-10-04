@@ -13,13 +13,14 @@ make_plots = ['density', 'trends']
 
 show_plots = False
 
+
 bal_file = '/data/des81.a/data/severett/paper-plots/cats/gold-compare/balrog_sof_galaxy_compare.fits'
 gld_cache_file = '/data/des81.a/data/severett/paper-plots/cats/systematics-maps-compare/y3_gold_2_2_galaxy_compare_healpy.fits'
 
 vb = True
 overwrite = True
 
-remove_stars = True # Cut on EXTENDED_CLASS_SOF > 1
+remove_stars = False # Cut on EXTENDED_CLASS_SOF > 1
 
 NSIDE_MAP = 4096
 NSIDE_OUT = 2048
@@ -171,6 +172,11 @@ except OSError:
 if remove_stars is True:
     bal = bal[bal['meas_EXTENDED_CLASS_SOF'] > 1]
     gld = gld[gld['EXTENDED_CLASS_SOF'] > 1]
+else:
+    # Still want to remove -9's
+    bal = bal[bal['meas_EXTENDED_CLASS_SOF'] > 0]
+    gld = gld[gld['EXTENDED_CLASS_SOF'] > 0]
+
 
 # Add maps to catalogs
 
@@ -213,7 +219,9 @@ print(f'GOLD objects before & after selecting common pixels: {Ngld_before} -> {N
 # -------------------------------------------------------------
 # Plots
 
-plot_outdir = os.path.join('plots', str(NSIDE_OUT))
+# Can adjust this for atypical runs
+plot_outdir_base = 'plots' #/my-special/run/
+plot_outdir = os.path.join(plot_outdir_base, str(NSIDE_OUT))
 
 # Density plots
 
@@ -238,10 +246,10 @@ density_dx = {
     'fwhm_r' : 0.0125,
     'fwhm_i' : 0.0125,
     'fwhm_z' : 0.0125,
-    'airmass_g' : 0.025,
-    'airmass_r' : 0.025,
-    'airmass_i' : 0.025,
-    'airmass_z' : 0.025,
+    'airmass_g' : .1,
+    'airmass_r' : .1,
+    'airmass_i' : .1,
+    'airmass_z' : .1,
     'skyvar_i' : 0.25,
     'skybrite_i' : 100,
     'det_frac_i' : .05,
@@ -278,10 +286,10 @@ trend_dx = {
     'fwhm_r' : 0.1,
     'fwhm_i' : 0.1,
     'fwhm_z' : 0.1,
-    'airmass_g' : 0.025,
-    'airmass_r' : 0.025,
-    'airmass_i' : 0.025,
-    'airmass_z' : 0.025,
+    'airmass_g' : .1,
+    'airmass_r' : .1,
+    'airmass_i' : .1,
+    'airmass_z' : .1,
     'skyvar_i' : 2.5,
     'skybrite_i' : 500,
     'det_frac_i' : .05,

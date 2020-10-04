@@ -8,7 +8,7 @@ plt.style.use('seaborn')
 sb.set_context("notebook", font_scale=1.5)
 
 def plot_map_densities(mapfiles, bal, gld, xlim=None, dx=None, 
-                       w=0.1, h=0.25, s=[16, 10], show=True, vb=False,
+                       w=0.3, h=0.5, s=[16, 12], show=True, vb=False,
                        nside=None, remove_stars=False,
                        outdir='plots', outfile='systematics-density-compare.png'):
     sb.set_style('whitegrid')
@@ -105,7 +105,7 @@ def plot_map_densities(mapfiles, bal, gld, xlim=None, dx=None,
         outfile = outfile.replace('.png', '_no_stars.png')
 
     if title != '':
-        plt.title(title)
+        plt.suptitle(title)
 
     plt.savefig(os.path.join(outdir, outfile))
 
@@ -115,7 +115,7 @@ def plot_map_densities(mapfiles, bal, gld, xlim=None, dx=None,
     return
 
 def plot_map_trends(mapfiles, bal, gld, xlim=None, dx=None,
-                    w=0.3, h=0.25, s=[18, 10], show=True, vb=False,
+                    w=0.3, h=0.5, s=[18, 12], show=True, vb=False,
                     nside=None, remove_stars=False,
                     outdir='plots', outfile='systematics-trend-compare.png'):
     sb.set_style('whitegrid')
@@ -148,7 +148,7 @@ def plot_map_trends(mapfiles, bal, gld, xlim=None, dx=None,
             'exp_time_i' : 200
         }
 
-    Nrows, Ncols = 2, 4
+    Nrows, Ncols = 3, 4
     
     fig, axes = plt.subplots(nrows=Nrows, ncols=Ncols)
     
@@ -260,7 +260,7 @@ def plot_map_trends(mapfiles, bal, gld, xlim=None, dx=None,
         outfile = outfile.replace('.png', '_no_stars.png')
 
     if title != '':
-        plt.title(title)
+        plt.suptitle(title)
 
     plt.savefig(os.path.join(outdir, outfile))
 
