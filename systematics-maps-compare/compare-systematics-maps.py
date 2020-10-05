@@ -5,6 +5,7 @@ import ntpath
 from astropy.table import Table
 import healpy as hp
 import map_plots
+import bin_info
 
 import pdb
 
@@ -13,6 +14,8 @@ make_plots = ['density', 'trends']
 
 show_plots = False
 
+run_name = 'gals_airmass'
+#run_name = None
 
 bal_file = '/data/des81.a/data/severett/paper-plots/cats/gold-compare/balrog_sof_galaxy_compare.fits'
 gld_cache_file = '/data/des81.a/data/severett/paper-plots/cats/systematics-maps-compare/y3_gold_2_2_galaxy_compare_healpy.fits'
@@ -20,7 +23,7 @@ gld_cache_file = '/data/des81.a/data/severett/paper-plots/cats/systematics-maps-
 vb = True
 overwrite = True
 
-remove_stars = False # Cut on EXTENDED_CLASS_SOF > 1
+remove_stars = True # Cut on EXTENDED_CLASS_SOF > 1
 
 NSIDE_MAP = 4096
 NSIDE_OUT = 2048
@@ -32,14 +35,22 @@ maps = {
         'fwhm_r': 'y3a2_r_o.4096_t.32768_FWHM.WMEAN_EQU.fits.gz',
         'fwhm_i': 'y3a2_i_o.4096_t.32768_FWHM.WMEAN_EQU.fits.gz',
         'fwhm_z': 'y3a2_z_o.4096_t.32768_FWHM.WMEAN_EQU.fits.gz',
+        #'depth_g': 'y3a2_gold_2_2_1_sof_nside4096_nest_g_depth.fits.gz',
+        #'depth_r': 'y3a2_gold_2_2_1_sof_nside4096_nest_r_depth.fits.gz',
+        #'depth_i': 'y3a2_gold_2_2_1_sof_nside4096_nest_i_depth.fits.gz',
+        #'depth_z': 'y3a2_gold_2_2_1_sof_nside4096_nest_z_depth.fits.gz',
         'airmass_g': 'y3a2_g_o.4096_t.32768_AIRMASS.WMEAN_EQU.fits.gz',
         'airmass_r': 'y3a2_r_o.4096_t.32768_AIRMASS.WMEAN_EQU.fits.gz',
         'airmass_i': 'y3a2_i_o.4096_t.32768_AIRMASS.WMEAN_EQU.fits.gz',
         'airmass_z': 'y3a2_z_o.4096_t.32768_AIRMASS.WMEAN_EQU.fits.gz',
-        'skyvar_i': 'y3a2_i_o.4096_t.32768_SKYVAR.UNCERTAINTY_EQU.fits.gz',
+        #'sig_zp_g' : 'y3a2_g_o.4096_t.32768_SIGMA_MAG_ZERO.QSUM_EQU.fits.gz',
+        #'sig_zp_r' : 'y3a2_r_o.4096_t.32768_SIGMA_MAG_ZERO.QSUM_EQU.fits.gz',
         'sig_zp_i' : 'y3a2_i_o.4096_t.32768_SIGMA_MAG_ZERO.QSUM_EQU.fits.gz',
+        #'sig_zp_z' : 'y3a2_z_o.4096_t.32768_SIGMA_MAG_ZERO.QSUM_EQU.fits.gz',
+        'skyvar_i': 'y3a2_i_o.4096_t.32768_SKYVAR.UNCERTAINTY_EQU.fits.gz',
         'skybrite_i' : 'y3a2_i_o.4096_t.32768_SKYBRITE.WMEAN_EQU.fits.gz',
-        'exp_time_i' : 'y3a2_i_o.4096_t.32768_EXPTIME.SUM_EQU.fits.gz'
+        'exp_time_i' : 'y3a2_i_o.4096_t.32768_EXPTIME.SUM_EQU.fits.gz',
+        #'airmass_i': 'y3a2_i_o.4096_t.32768_AIRMASS.WMEAN_EQU.fits.gz'
 #         'det_frac_i' : 'y3a2_griz_o.4096_t.32768_coverfoot_EQU.fits.gz'
 #         'stellar_density' : 'psf_stellar_density_fracdet_binned_1024_nside_4096_cel.fits.gz'
 }
@@ -174,8 +185,8 @@ if remove_stars is True:
     gld = gld[gld['EXTENDED_CLASS_SOF'] > 1]
 else:
     # Still want to remove -9's
-    bal = bal[bal['meas_EXTENDED_CLASS_SOF'] > 0]
-    gld = gld[gld['EXTENDED_CLASS_SOF'] > 0]
+    bal = bal[bal['meas_EXTENDED_CLASS_SOF'] >= 0]
+    gld = gld[gld['EXTENDED_CLASS_SOF'] >= 0]
 
 
 # Add maps to catalogs
@@ -223,83 +234,25 @@ print(f'GOLD objects before & after selecting common pixels: {Ngld_before} -> {N
 plot_outdir_base = 'plots' #/my-special/run/
 plot_outdir = os.path.join(plot_outdir_base, str(NSIDE_OUT))
 
+if run_name is not None:
+    plot_outdir = os.path.join(plot_outdir, run_name)
+
 # Density plots
-
-density_xlim = {
-    'fwhm_g' : [0.8, 1.5],
-    'fwhm_r' : [0.8, 1.2],
-    'fwhm_i' : [0.75, 1.2],
-    'fwhm_z' : [0.75, 1.2],
-    'airmass_g' : [1., 1.4],
-    'airmass_r' : [1., 1.4],
-    'airmass_i' : [1., 1.4],
-    'airmass_z' : [1., 1.4],
-    'skyvar_i' : [5, 15],
-    'skybrite_i' : [2000, 5000],
-    'det_frac_i' : [0.75, 1.],
-    'sig_zp_i' : [.005, .015],
-    'exp_time_i' : [0, 800]
-}
-
-density_dx = {
-    'fwhm_g' : 0.025,
-    'fwhm_r' : 0.0125,
-    'fwhm_i' : 0.0125,
-    'fwhm_z' : 0.0125,
-    'airmass_g' : .1,
-    'airmass_r' : .1,
-    'airmass_i' : .1,
-    'airmass_z' : .1,
-    'skyvar_i' : 0.25,
-    'skybrite_i' : 100,
-    'det_frac_i' : .05,
-    'sig_zp_i' : .0025,
-    'exp_time_i' : 25
-}
 
 if 'density' in make_plots:
     print('Starting density plots')
+    density_xlim = bin_info.density_xlim
+    density_dx = bin_info.density_dx
     map_plots.plot_map_densities(mapfiles, bal, gld, xlim=density_xlim, dx=density_dx,
                                  outdir=plot_outdir, vb=vb, show=show_plots,
                                  nside=NSIDE_OUT, remove_stars=remove_stars)
 
 # Trend Plots
 
-trend_xlim = {
-    'fwhm_g' : [0.8, 1.5],
-    'fwhm_r' : [0.8, 1.2],
-    'fwhm_i' : [0.8, 1.2],
-    'fwhm_z' : [0.8, 1.2],
-    'airmass_g' : [1., 1.4],
-    'airmass_r' : [1., 1.4],
-    'airmass_i' : [1., 1.4],
-    'airmass_z' : [1., 1.4],
-    'skyvar_i' : [5, 15],
-    'skybrite_i' : [2000, 5000],
-    'det_frac_i' : [0.75, 1.],
-    'sig_zp_i' : [.005, .015],
-    'exp_time_i' : [0, 800]
-}
-
-trend_dx = {
-    'fwhm_g' : 0.1,
-    'fwhm_r' : 0.1,
-    'fwhm_i' : 0.1,
-    'fwhm_z' : 0.1,
-    'airmass_g' : .1,
-    'airmass_r' : .1,
-    'airmass_i' : .1,
-    'airmass_z' : .1,
-    'skyvar_i' : 2.5,
-    'skybrite_i' : 500,
-    'det_frac_i' : .05,
-    'sig_zp_i' : .0025,
-    'exp_time_i' : 200
-}
-
 if 'trends' in make_plots:
     print('Starting trend plots')
+    trend_xlim = bin_info.trend_xlim
+    trend_dx = bin_info.trend_dx
     map_plots.plot_map_trends(mapfiles, bal, gld, xlim=trend_xlim, dx=trend_dx,
                               outdir=plot_outdir, vb=vb, show=show_plots,
                               nside=NSIDE_OUT, remove_stars=remove_stars)
-
