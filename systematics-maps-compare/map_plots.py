@@ -225,8 +225,8 @@ def plot_map_trends(mapfiles, bal, gld,
         else:
             axes.append(plt.subplot(Nrows, Ncols, k))
         
-        plt.errorbar(bin_mean[mname], bal_ratio[mname], bal_err[mname], label=lbal, lw=2, marker='o')
-        plt.errorbar(bin_mean[mname], gld_ratio[mname], gld_err[mname], label=lgld, lw=2, marker='o', color='k')
+        plt.errorbar(bin_mean[mname], bal_ratio[mname], bal_err[mname], label=lbal, lw=2, marker='o', zorder=10)
+        plt.errorbar(bin_mean[mname], gld_ratio[mname], gld_err[mname], label=lgld, lw=2, marker='o', color='k', zorder=5)
         plt.axhline(1, lw=3, ls='--', c='k')
         
         plt.xlabel(mname)
@@ -294,20 +294,50 @@ def calc_bootstrap_samples(bal, gld, mapfiles, Nsamples,
 
     Nmaps = len(mapfiles)
 
-    Nbal = len(bal)
-    Ngld = len(gld)
+    # Indices are identical across maps
+    bal_pix_indices = bal[list(mapfiles.keys())[0]+'_index']
+    gld_pix_indices = gld[list(mapfiles.keys())[0]+'_index']
+
+    # Bal & gold pixels should also also be identical at this stage
+    try:
+        unique_bal_pixels = np.unique(bal_pix_indices)
+        unique_gld_pixels = np.unique(gld_pix_indices)
+        assert (unique_bal_pixels == unique_gld_pixels).all()
+        unique_pixels = unique_bal_pixels
+        Npixels = len(unique_pixels)
+    except AssertionError as e:
+        print(f'Balrog has {len(bal_pix_indices)} unique pixels')
+        print(f'GOLD has {len(gld_pix_indices)} unique pixels')
+        raise e
+
+    # Only used for sampling over galaxies
+    #Nbal = len(bal)
+    #Ngld = len(gld)
 
     for n in range(Nsamples):
         t0 = time.time()
         if vb is True:
             print('Generating random sample {} of {}'.format(n+1, Nsamples))
 
+        sampled_pixels = unique_pixels[(np.random.rand(Npixels)*Npixels).astype(int)]
+        
         if vb_iter is True:
             print('Resampling Balrog...')
-        s_bal = bal[(np.random.rand(Nbal)*Nbal).astype(int)]
+        bal_in_sample = np.isin(bal_pix_indices, sampled_pixels)
+        s_bal = bal[bal_in_sample]
+        
         if vb_iter is True:
             print('Resampling GOLD...')
-        s_gld = gld[(np.random.rand(Ngld)*Ngld).astype(int)]
+        gld_in_sample = np.isin(gld_pix_indices, sampled_pixels)
+        s_gld = gld[gld_in_sample]
+
+        # Use this to sample over galaxies, but this does not include cosmic variance
+        #if vb_iter is True:
+        #    print('Resampling Balrog...')
+        #s_bal = bal[(np.random.rand(Nbal)*Nbal).astype(int)]
+        #if vb_iter is True:
+        #    print('Resampling GOLD...')
+        #s_gld = gld[(np.random.rand(Ngld)*Ngld).astype(int)]
 
         k = 0
         for mname in mapfiles.keys():
@@ -345,11 +375,7 @@ def calc_bootstrap_samples(bal, gld, mapfiles, Nsamples,
                 Npixels_bal = len(np.unique(s_bal[f'{mname}_index'][bal_in_bin]))
                 Npixels_gld = len(np.unique(s_gld[f'{mname}_index'][gld_in_bin]))
 
-                # We relax this for the bootstrap subsamples
-                #assert(Npixels_bal == Npixels_gld)
-
-                print(f'Npixels_bal = {Npixels_bal}')
-                print(f'Npixels_gld = {Npixels_gld}')
+                assert(Npixels_bal == Npixels_gld)
 
                 bal_base_mean = (Npixels_bal * Nmean_bal)
                 gld_base_mean = (Npixels_gld * Nmean_gld)

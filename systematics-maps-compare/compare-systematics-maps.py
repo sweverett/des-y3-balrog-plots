@@ -14,11 +14,11 @@ make_plots = ['trends']
 
 show_plots = False
 
-run_name = 'gals_boot_10'
+run_name = 'gals_cosmic_50'
 
 #error_type = 'poisson'
 error_type = 'bootstrap'
-Nsamples = 10
+Nsamples = 50
 use_cached_bootstrap = False # In the future, will check if present. For now hardcoded
 
 bal_file = '/data/des81.a/data/severett/paper-plots/cats/gold-compare/balrog_sof_galaxy_compare.fits'
@@ -38,24 +38,28 @@ partial = True
 maps = {
         'fwhm_g': 'y3a2_g_o.4096_t.32768_FWHM.WMEAN_EQU.fits.gz',
         'fwhm_r': 'y3a2_r_o.4096_t.32768_FWHM.WMEAN_EQU.fits.gz',
-        #'fwhm_i': 'y3a2_i_o.4096_t.32768_FWHM.WMEAN_EQU.fits.gz',
-        #'fwhm_z': 'y3a2_z_o.4096_t.32768_FWHM.WMEAN_EQU.fits.gz',
-        #'depth_g': 'y3a2_gold_2_2_1_sof_nside4096_nest_g_depth.fits.gz',
-        #'depth_r': 'y3a2_gold_2_2_1_sof_nside4096_nest_r_depth.fits.gz',
-        #'depth_i': 'y3a2_gold_2_2_1_sof_nside4096_nest_i_depth.fits.gz',
-        #'depth_z': 'y3a2_gold_2_2_1_sof_nside4096_nest_z_depth.fits.gz',
-        #'airmass_g': 'y3a2_g_o.4096_t.32768_AIRMASS.WMEAN_EQU.fits.gz',
-        #'airmass_r': 'y3a2_r_o.4096_t.32768_AIRMASS.WMEAN_EQU.fits.gz',
-        #'airmass_i': 'y3a2_i_o.4096_t.32768_AIRMASS.WMEAN_EQU.fits.gz',
-        #'airmass_z': 'y3a2_z_o.4096_t.32768_AIRMASS.WMEAN_EQU.fits.gz',
-        #'sig_zp_g' : 'y3a2_g_o.4096_t.32768_SIGMA_MAG_ZERO.QSUM_EQU.fits.gz',
-        #'sig_zp_r' : 'y3a2_r_o.4096_t.32768_SIGMA_MAG_ZERO.QSUM_EQU.fits.gz',
-        #'sig_zp_i' : 'y3a2_i_o.4096_t.32768_SIGMA_MAG_ZERO.QSUM_EQU.fits.gz',
-        #'sig_zp_z' : 'y3a2_z_o.4096_t.32768_SIGMA_MAG_ZERO.QSUM_EQU.fits.gz',
-        #'skyvar_i': 'y3a2_i_o.4096_t.32768_SKYVAR.UNCERTAINTY_EQU.fits.gz',
-        #'skybrite_i' : 'y3a2_i_o.4096_t.32768_SKYBRITE.WMEAN_EQU.fits.gz',
-        #'exp_time_i' : 'y3a2_i_o.4096_t.32768_EXPTIME.SUM_EQU.fits.gz',
-        #'airmass_i': 'y3a2_i_o.4096_t.32768_AIRMASS.WMEAN_EQU.fits.gz'
+        'fwhm_i': 'y3a2_i_o.4096_t.32768_FWHM.WMEAN_EQU.fits.gz',
+        'fwhm_z': 'y3a2_z_o.4096_t.32768_FWHM.WMEAN_EQU.fits.gz',
+        'sig_zp_g' : 'y3a2_g_o.4096_t.32768_SIGMA_MAG_ZERO.QSUM_EQU.fits.gz',
+        'sig_zp_r' : 'y3a2_r_o.4096_t.32768_SIGMA_MAG_ZERO.QSUM_EQU.fits.gz',
+        'sig_zp_i' : 'y3a2_i_o.4096_t.32768_SIGMA_MAG_ZERO.QSUM_EQU.fits.gz',
+        'sig_zp_z' : 'y3a2_z_o.4096_t.32768_SIGMA_MAG_ZERO.QSUM_EQU.fits.gz',
+        'airmass_g': 'y3a2_g_o.4096_t.32768_AIRMASS.WMEAN_EQU.fits.gz',
+        'airmass_r': 'y3a2_r_o.4096_t.32768_AIRMASS.WMEAN_EQU.fits.gz',
+        'airmass_i': 'y3a2_i_o.4096_t.32768_AIRMASS.WMEAN_EQU.fits.gz',
+        'airmass_z': 'y3a2_z_o.4096_t.32768_AIRMASS.WMEAN_EQU.fits.gz',
+        'skyvar_g': 'y3a2_g_o.4096_t.32768_SKYVAR.UNCERTAINTY_EQU.fits.gz',
+        'skyvar_r': 'y3a2_r_o.4096_t.32768_SKYVAR.UNCERTAINTY_EQU.fits.gz',
+        'skyvar_i': 'y3a2_i_o.4096_t.32768_SKYVAR.UNCERTAINTY_EQU.fits.gz',
+        'skyvar_z': 'y3a2_z_o.4096_t.32768_SKYVAR.UNCERTAINTY_EQU.fits.gz',
+        'skybrite_g' : 'y3a2_g_o.4096_t.32768_SKYBRITE.WMEAN_EQU.fits.gz',
+        'skybrite_r' : 'y3a2_r_o.4096_t.32768_SKYBRITE.WMEAN_EQU.fits.gz',
+        'skybrite_i' : 'y3a2_i_o.4096_t.32768_SKYBRITE.WMEAN_EQU.fits.gz',
+        'skybrite_z' : 'y3a2_z_o.4096_t.32768_SKYBRITE.WMEAN_EQU.fits.gz',
+        'exp_time_g' : 'y3a2_g_o.4096_t.32768_EXPTIME.SUM_EQU.fits.gz',
+        'exp_time_r' : 'y3a2_r_o.4096_t.32768_EXPTIME.SUM_EQU.fits.gz',
+        'exp_time_i' : 'y3a2_i_o.4096_t.32768_EXPTIME.SUM_EQU.fits.gz',
+        'exp_time_z' : 'y3a2_z_o.4096_t.32768_EXPTIME.SUM_EQU.fits.gz',
 #         'det_frac_i' : 'y3a2_griz_o.4096_t.32768_coverfoot_EQU.fits.gz'
 #         'stellar_density' : 'psf_stellar_density_fracdet_binned_1024_nside_4096_cel.fits.gz'
 }
