@@ -11,7 +11,7 @@ plt.style.use('seaborn')
 sb.set_context("notebook", font_scale=1.5)
 
 def plot_map_densities(mapfiles, bal, gld, 
-                       w=0.3, h=0.5, s=[16, 12], show=True, vb=False,
+                       w=0.15, h=0.5, s=[16, 24], show=True, vb=False,
                        nside=None, remove_stars=False,
                        outdir='plots', outfile='systematics-density-compare.png'):
     sb.set_style('whitegrid')
@@ -54,10 +54,10 @@ def plot_map_densities(mapfiles, bal, gld,
         else:
             sf = 1.
             
-        if (xlim[mname] is None):
-            bins = 30
-        else:
+        try:
             bins = np.arange(sf*xlim[mname][0], sf*xlim[mname][1]+sf*dx[mname], sf*dx[mname])
+        except KeyError:
+            bins = 30
 
         plt.hist(sf*bal[mname], bins=bins, label=lbal, density=True, histtype=histtype, alpha=alpha, lw=lw)
         plt.hist(sf*gld[mname], bins=bins, label=lgld, density=True, histtype=histtype, alpha=alpha, lw=lw)
@@ -92,10 +92,10 @@ def plot_map_densities(mapfiles, bal, gld,
         title += ', EXTENDED_CLASS_SOF > 1'
         outfile = outfile.replace('.png', '_no_stars.png')
 
-    if title != '':
-        plt.suptitle(title)
+    #if title != '':
+    #    plt.suptitle(title)
 
-    plt.savefig(os.path.join(outdir, outfile))
+    plt.savefig(os.path.join(outdir, outfile), bbox_inches='tight')
 
     if show is True:
         plt.show()
@@ -103,7 +103,7 @@ def plot_map_densities(mapfiles, bal, gld,
     return
 
 def plot_map_trends(mapfiles, bal, gld,
-                    w=0.3, h=0.5, s=[18, 12], show=True, vb=False,
+                    w=0.35, h=0.5, s=[20, 24], show=True, vb=False,
                     nside=None, remove_stars=False,
                     outdir='plots', outfile='systematics-trend-compare.png',
                     error_type='poisson', Nsamples=None):
@@ -193,8 +193,15 @@ def plot_map_trends(mapfiles, bal, gld,
             bal_base_mean = (Npixels_bal * Nmean_bal)
             gld_base_mean = (Npixels_gld * Nmean_gld)
             
-            bal_ratio[mname][j] = len(bal[bal_in_bin]) / bal_base_mean
-            gld_ratio[mname][j] = len(gld[gld_in_bin]) / gld_base_mean
+            try:
+                bal_ratio[mname][j] = len(bal[bal_in_bin]) / bal_base_mean
+            except:
+                bal_ratio[mname][j] = np.nan
+            try:
+                gld_ratio[mname][j] = len(gld[gld_in_bin]) / gld_base_mean
+            except:
+                gld_ratio[mname][j] = np.nan
+
             bin_mean[mname][j] = np.mean([b1, b2])
 
             if error_type == 'poisson':
@@ -222,12 +229,22 @@ def plot_map_trends(mapfiles, bal, gld,
             axes.append(plt.subplot(Nrows, Ncols, k))
         else:
             axes.append(plt.subplot(Nrows, Ncols, k))
+
+        # Multiply some quantities by a scale factor
+        if 'sig_zp' in mname:
+            sf = 1000.
+        else:
+            sf = 1.
         
-        plt.errorbar(bin_mean[mname], bal_ratio[mname], bal_err[mname], label=lbal, lw=2, marker='o', zorder=10)
-        plt.errorbar(bin_mean[mname], gld_ratio[mname], gld_err[mname], label=lgld, lw=2, marker='o', color='k', zorder=5)
+        plt.errorbar(sf*bin_mean[mname], bal_ratio[mname], bal_err[mname], label=lbal, lw=2, marker='o', zorder=10)
+        plt.errorbar(sf*bin_mean[mname], gld_ratio[mname], gld_err[mname], label=lgld, lw=2, marker='o', color='k', zorder=5)
         plt.axhline(1, lw=3, ls='--', c='k')
         
-        plt.xlabel(mname)
+        if 'sig_zp' in mname:
+            xl = f'{mname} (mmag)'
+        else:
+            xl = mname
+        plt.xlabel(xl)
        
         if (k-1) % 4 == 0:
             plt.ylabel('N / <N>')
@@ -252,10 +269,10 @@ def plot_map_trends(mapfiles, bal, gld,
         title += ', EXTENDED_CLASS_SOF > 1'
         outfile = outfile.replace('.png', '_no_stars.png')
 
-    if title != '':
-        plt.suptitle(title)
+    #if title != '':
+    #    plt.suptitle(title)
 
-    plt.savefig(os.path.join(outdir, outfile))
+    plt.savefig(os.path.join(outdir, outfile), bbox_inches='tight')
 
     if show is True:
         plt.show()
