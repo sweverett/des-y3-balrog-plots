@@ -1,45 +1,23 @@
 import numpy as np
 import healpy as hp
 import os
+import time
 import matplotlib.pyplot as plt
+
+import bin_info
 
 import seaborn as sb
 plt.style.use('seaborn')
 sb.set_context("notebook", font_scale=1.5)
 
-def plot_map_densities(mapfiles, bal, gld, xlim=None, dx=None, 
+def plot_map_densities(mapfiles, bal, gld, 
                        w=0.3, h=0.5, s=[16, 12], show=True, vb=False,
                        nside=None, remove_stars=False,
                        outdir='plots', outfile='systematics-density-compare.png'):
     sb.set_style('whitegrid')
 
-    if xlim is None:
-        xlim = {
-            'fwhm_g' : [0.8, 1.5],
-            'fwhm_r' : [0.8, 1.2],
-            'fwhm_i' : [0.75, 1.2],
-            'fwhm_z' : [0.75, 1.2],
-            'airmass_i' : [1., 1.4],
-            'skyvar_i' : [5, 15],
-            'skybrite_i' : [2000, 5000],
-            'det_frac_i' : [0.75, 1.],
-            'sig_zp_i' : None,
-            'exp_time_i' : [0, 800]
-        }
-        
-    if dx is None:
-        dx = {
-            'fwhm_g' : 0.025,
-            'fwhm_r' : 0.0125,
-            'fwhm_i' : 0.0125,
-            'fwhm_z' : 0.0125,
-            'airmass_i' : 0.025,
-            'skyvar_i' : 0.25,
-            'skybrite_i' : 100,
-            'det_frac_i' : .05,
-            'sig_zp_i' : None,
-            'exp_time_i' : 25
-        }
+    xlim = bin_info.density_xlim
+    dx = bin_info.density_dx
     
     Nrows, Ncols = 3, 4
     
@@ -75,10 +53,21 @@ def plot_map_densities(mapfiles, bal, gld, xlim=None, dx=None,
             bins = 30
         else:
             bins = np.arange(xlim[mname][0], xlim[mname][1]+dx[mname], dx[mname])
-        plt.hist(bal[mname], bins=bins, label=lbal, density=True, histtype=histtype, alpha=alpha, lw=lw)
-        plt.hist(gld[mname], bins=bins, label=lgld, density=True, histtype=histtype, alpha=alpha, lw=lw)
+
+        # Multiply some quantities by a scale factor
+        if 'sig_zp' in mname:
+            sf = 1000.
+        else:
+            sf = 1.
+            
+        plt.hist(sf*bal[mname], bins=bins, label=lbal, density=True, histtype=histtype, alpha=alpha, lw=lw)
+        plt.hist(sf*gld[mname], bins=bins, label=lgld, density=True, histtype=histtype, alpha=alpha, lw=lw)
         
-        plt.xlabel(mname)
+        if 'sig_zp' in mname:
+            xl = f'{mname} (mmag)'
+        else:
+            xl = mname
+        plt.xlabel(xl)
        
         if (k-1) % 4 == 0:
             plt.ylabel('Density')
@@ -99,7 +88,7 @@ def plot_map_densities(mapfiles, bal, gld, xlim=None, dx=None,
     title = ''
     if nside is not None:
         title = str(nside)
-        outfile = outfile.replace('.png', f'{nside}.png')
+        outfile = outfile.replace('.png', f'_{nside}.png')
     if remove_stars is True:
         title += ', EXTENDED_CLASS_SOF > 1'
         outfile = outfile.replace('.png', '_no_stars.png')
@@ -114,39 +103,33 @@ def plot_map_densities(mapfiles, bal, gld, xlim=None, dx=None,
 
     return
 
-def plot_map_trends(mapfiles, bal, gld, xlim=None, dx=None,
+def plot_map_trends(mapfiles, bal, gld,
                     w=0.3, h=0.5, s=[18, 12], show=True, vb=False,
                     nside=None, remove_stars=False,
-                    outdir='plots', outfile='systematics-trend-compare.png'):
+                    outdir='plots', outfile='systematics-trend-compare.png',
+                    error_type='poisson', Nsamples=None):
+
+    if remove_stars is False:
+        stars_dir = ''
+    else:
+        stars_dir = 'no_stars'
+
+    if error_type == 'bootstrap':
+        if Nsamples is None:
+            raise ValueError('If using bootstrap errors, must pass Nsamples!')
+
+        bal_boot_file = os.path.join('./samples/', str(Nsamples), stars_dir,
+                                     f'y3_gold_2_2_systematics_compare_{Nsamples}_bal_std.npz')
+        gld_boot_file = os.path.join('./samples/', str(Nsamples), stars_dir,
+                                     f'y3_gold_2_2_systematics_compare_{Nsamples}_gld_std.npz')
+
+        bal_boot_std = np.load(bal_boot_file)
+        gld_boot_std = np.load(gld_boot_file)
+
     sb.set_style('whitegrid')
 
-    if xlim is None:
-        xlim = {
-            'fwhm_g' : [0.8, 1.5],
-            'fwhm_r' : [0.8, 1.2],
-            'fwhm_i' : [0.8, 1.2],
-            'fwhm_z' : [0.8, 1.2],
-            'airmass_i' : [1., 1.4],
-            'skyvar_i' : [5, 15],
-            'skybrite_i' : [2000, 5000],
-            'det_frac_i' : [0.75, 1.],
-            'sig_zp_i' : None,
-            'exp_time_i' : [0, 800]
-        }
-
-    if dx is None:
-        dx = {
-            'fwhm_g' : 0.1,
-            'fwhm_r' : 0.1,
-            'fwhm_i' : 0.1,
-            'fwhm_z' : 0.1,
-            'airmass_i' : 0.1,
-            'skyvar_i' : 2.5,
-            'skybrite_i' : 500,
-            'det_frac_i' : .05,
-            'sig_zp_i' : None,
-            'exp_time_i' : 200
-        }
+    xlim = bin_info.trend_xlim
+    dx = bin_info.trend_dx
 
     Nrows, Ncols = 3, 4
     
@@ -159,7 +142,7 @@ def plot_map_trends(mapfiles, bal, gld, xlim=None, dx=None,
     Nmaps = len(mapfiles)
     
     axes = []
-    
+
     Nmean_bal = {}
     Nmean_gld = {}
     
@@ -173,22 +156,25 @@ def plot_map_trends(mapfiles, bal, gld, xlim=None, dx=None,
     for mname in mapfiles.keys():
         k += 1
         print(f'Computing {mname} ratio ({k} of {Nmaps})')
+
+        if k == 1:
+            # Is the same for every map, given a sample
+            Nmean_bal = len(bal) / len(np.unique(bal[f'{mname}_index']))
+            Nmean_gld = len(gld) / len(np.unique(gld[f'{mname}_index']))
              
         if (xlim[mname] is None):
             bins = 30
         else:
             bins = np.arange(xlim[mname][0], xlim[mname][1]+dx[mname], dx[mname])
             
-        # These should be the same for all mname, but let's double check
-        Nmean_bal[mname] = len(bal) / len(np.unique(bal[f'{mname}_index']))
-        Nmean_gld[mname] = len(gld) / len(np.unique(gld[f'{mname}_index']))
-            
         N = len(bins)-1
         bal_ratio[mname] = np.zeros(N)
-        bal_err[mname] = np.zeros(N)
         gld_ratio[mname] = np.zeros(N)
-        gld_err[mname] = np.zeros(N)
         bin_mean[mname] = np.zeros(N)        
+
+        if error_type == 'poisson':
+            bal_err[mname] = np.zeros(N)
+            gld_err[mname] = np.zeros(N)
             
         j = 0
         for b1, b2 in zip(bins[:-1], bins[1:]):
@@ -196,24 +182,33 @@ def plot_map_trends(mapfiles, bal, gld, xlim=None, dx=None,
             bal_in_bin = np.where( (bal[mname] >= b1) & (bal[mname] < b2))
             gld_in_bin = np.where( (gld[mname] >= b1) & (gld[mname] < b2))
             
-    #         print('Grabbing unique tiles...')
-    #         Ntiles = len(np.unique(bal['meas_tilename'][bal_in_bin]))
-    #         assert Ntiles == len(np.unique(gld['TILENAME'][gld_in_bin]))
-    
             Npixels_bal = len(np.unique(bal[f'{mname}_index'][bal_in_bin]))
             Npixels_gld = len(np.unique(gld[f'{mname}_index'][gld_in_bin]))
-            if vb is True:
+
+            try:
+                assert(Npixels_bal == Npixels_gld)
+            except AssertionError as e:
                 print(f'Npixels_bal = {Npixels_bal}')
                 print(f'Npixels_gld = {Npixels_gld}')
+                raise e
+
+            bal_base_mean = (Npixels_bal * Nmean_bal)
+            gld_base_mean = (Npixels_gld * Nmean_gld)
             
-            bal_ratio[mname][j] = len(bal[bal_in_bin]) / (Npixels_bal * Nmean_bal[mname])
-            bal_err[mname][j] = np.sqrt(len(bal[bal_in_bin])) / (Npixels_bal * Nmean_bal[mname])
-            gld_ratio[mname][j] = len(gld[gld_in_bin]) / (Npixels_gld * Nmean_gld[mname])
-            gld_err[mname][j] = np.sqrt(len(gld[gld_in_bin])) / (Npixels_gld * Nmean_gld[mname])
+            bal_ratio[mname][j] = len(bal[bal_in_bin]) / bal_base_mean
+            gld_ratio[mname][j] = len(gld[gld_in_bin]) / gld_base_mean
             bin_mean[mname][j] = np.mean([b1, b2])
+
+            if error_type == 'poisson':
+                bal_err[mname][j] = np.sqrt(len(bal[bal_in_bin])) / bal_base_mean
+                gld_err[mname][j] = np.sqrt(len(gld[gld_in_bin])) / gld_base_mean
             
             j += 1
-            
+
+        if error_type == 'bootstrap':
+            bal_err[mname] = bal_boot_std[mname]
+            gld_err[mname] = gld_boot_std[mname]
+
     k = 0
     for mname in mapfiles.keys():
         k += 1
@@ -266,5 +261,141 @@ def plot_map_trends(mapfiles, bal, gld, xlim=None, dx=None,
 
     if show is True:
         plt.show()
+
+    return
+
+def calc_bootstrap_samples(bal, gld, mapfiles, Nsamples,
+                           outdir='./samples/', remove_stars=None,
+                           vb=True, vb_iter=False):
+
+    if remove_stars is None:
+        raise ValueError('Must pass `remove_stars`!')
+
+    if not os.path.exists(outdir):
+        os.mkdir(outdir)
+
+    outdir = os.path.join(outdir, str(Nsamples))
+
+    if not os.path.exists(outdir):
+        os.mkdir(outdir)
+
+    if remove_stars is True:
+        outdir = os.path.join(outdir, 'no_stars')
+
+    if not os.path.exists(outdir):
+        os.mkdir(outdir)
+
+    xlim = bin_info.trend_xlim
+    dx = bin_info.trend_dx
+
+    bal_ratios = {}
+    gld_ratios = {}
+    bin_means = {}
+
+    Nmaps = len(mapfiles)
+
+    Nbal = len(bal)
+    Ngld = len(gld)
+
+    for n in range(Nsamples):
+        t0 = time.time()
+        if vb is True:
+            print('Generating random sample {} of {}'.format(n+1, Nsamples))
+
+        if vb_iter is True:
+            print('Resampling Balrog...')
+        s_bal = bal[(np.random.rand(Nbal)*Nbal).astype(int)]
+        if vb_iter is True:
+            print('Resampling GOLD...')
+        s_gld = gld[(np.random.rand(Ngld)*Ngld).astype(int)]
+
+        k = 0
+        for mname in mapfiles.keys():
+            k += 1
+            if vb is True:
+                print(f'Computing {mname} ratio ({k} of {Nmaps})')
+
+            if n == 0:
+                bal_ratios[mname] = []
+                gld_ratios[mname] = []
+                bin_means[mname] = []
+
+            if k == 1:
+                # Is the same for every map, given a sample
+                Nmean_bal = len(s_bal) / len(np.unique(s_bal[f'{mname}_index']))
+                Nmean_gld = len(s_gld) / len(np.unique(s_gld[f'{mname}_index']))
+                 
+            if (xlim[mname] is None):
+                bins = 10
+            else:
+                bins = np.arange(xlim[mname][0], xlim[mname][1]+dx[mname], dx[mname])
+                
+            Nbins = len(bins)-1
+            bal_ratio = np.zeros(Nbins)
+            gld_ratio = np.zeros(Nbins)
+            bin_mean = np.zeros(Nbins)
+                
+            j = 0
+            for b1, b2 in zip(bins[:-1], bins[1:]):
+                if vb_iter is True:
+                    print(f'Bin {j+1} of {Nbins}')
+                bal_in_bin = np.where( (s_bal[mname] >= b1) & (s_bal[mname] < b2))
+                gld_in_bin = np.where( (s_gld[mname] >= b1) & (s_gld[mname] < b2))
+        
+                Npixels_bal = len(np.unique(s_bal[f'{mname}_index'][bal_in_bin]))
+                Npixels_gld = len(np.unique(s_gld[f'{mname}_index'][gld_in_bin]))
+
+                # We relax this for the bootstrap subsamples
+                #assert(Npixels_bal == Npixels_gld)
+
+                print(f'Npixels_bal = {Npixels_bal}')
+                print(f'Npixels_gld = {Npixels_gld}')
+
+                bal_base_mean = (Npixels_bal * Nmean_bal)
+                gld_base_mean = (Npixels_gld * Nmean_gld)
+
+                bal_ratio[j] = len(bal[bal_in_bin]) / bal_base_mean
+                gld_ratio[j] = len(gld[gld_in_bin]) / gld_base_mean
+                bin_mean[j] = np.mean([b1, b2])
+                
+                j += 1
+                
+            bal_ratios[mname].append(bal_ratio)
+            gld_ratios[mname].append(gld_ratio)
+            bin_means[mname].append(bin_mean)
+
+        #if save_samples is True:
+        #    outfile = os.path.join(outdir, 'y3_gold_2_2_systematics_compare_{}.fits'.format(n))
+        #    fitsio.write(outfile, s, overwrite=overwrite)
+
+        t1 = time.time()
+
+        print(f'Iteration {n} took {t1-t0:.2f}s')
+
+    bal_std = {}
+    gld_std = {}
+
+    for col, vals in bal_ratios.items():
+        if vb is True:
+            print('Calculating Balrog bin stds...')
+        bal_std[col] = np.std(vals, axis=0)
+
+    for col, vals in gld_ratios.items():
+        if vb is True:
+            print('Calculating GOLD bin stds...')
+        gld_std[col] = np.std(vals, axis=0)
+    
+    if vb is True:
+        print('Saving Balrog bin stds...')
+    outfile = os.path.join(outdir, f'y3_gold_2_2_systematics_compare_{Nsamples}_bal_std.npz')
+    np.savez(outfile, **bal_std)
+
+    if vb is True:
+        print('Saving GOLD bin stds...')
+    outfile = os.path.join(outdir, f'y3_gold_2_2_systematics_compare_{Nsamples}_gld_std.npz')
+    np.savez(outfile, **gld_std)
+
+    if vb is True:
+        print('Done!')
 
     return

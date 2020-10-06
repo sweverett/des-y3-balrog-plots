@@ -9,18 +9,23 @@ import bin_info
 
 import pdb
 
-make_plots = ['density', 'trends']
-#make_plots = ['trends']
+#make_plots = ['density', 'trends']
+make_plots = ['trends']
 
 show_plots = False
 
-run_name = 'gals_airmass'
-#run_name = None
+run_name = 'gals_boot_10'
+
+#error_type = 'poisson'
+error_type = 'bootstrap'
+Nsamples = 10
+use_cached_bootstrap = False # In the future, will check if present. For now hardcoded
 
 bal_file = '/data/des81.a/data/severett/paper-plots/cats/gold-compare/balrog_sof_galaxy_compare.fits'
 gld_cache_file = '/data/des81.a/data/severett/paper-plots/cats/systematics-maps-compare/y3_gold_2_2_galaxy_compare_healpy.fits'
 
 vb = True
+vb_iter = True
 overwrite = True
 
 remove_stars = True # Cut on EXTENDED_CLASS_SOF > 1
@@ -33,23 +38,23 @@ partial = True
 maps = {
         'fwhm_g': 'y3a2_g_o.4096_t.32768_FWHM.WMEAN_EQU.fits.gz',
         'fwhm_r': 'y3a2_r_o.4096_t.32768_FWHM.WMEAN_EQU.fits.gz',
-        'fwhm_i': 'y3a2_i_o.4096_t.32768_FWHM.WMEAN_EQU.fits.gz',
-        'fwhm_z': 'y3a2_z_o.4096_t.32768_FWHM.WMEAN_EQU.fits.gz',
+        #'fwhm_i': 'y3a2_i_o.4096_t.32768_FWHM.WMEAN_EQU.fits.gz',
+        #'fwhm_z': 'y3a2_z_o.4096_t.32768_FWHM.WMEAN_EQU.fits.gz',
         #'depth_g': 'y3a2_gold_2_2_1_sof_nside4096_nest_g_depth.fits.gz',
         #'depth_r': 'y3a2_gold_2_2_1_sof_nside4096_nest_r_depth.fits.gz',
         #'depth_i': 'y3a2_gold_2_2_1_sof_nside4096_nest_i_depth.fits.gz',
         #'depth_z': 'y3a2_gold_2_2_1_sof_nside4096_nest_z_depth.fits.gz',
-        'airmass_g': 'y3a2_g_o.4096_t.32768_AIRMASS.WMEAN_EQU.fits.gz',
-        'airmass_r': 'y3a2_r_o.4096_t.32768_AIRMASS.WMEAN_EQU.fits.gz',
-        'airmass_i': 'y3a2_i_o.4096_t.32768_AIRMASS.WMEAN_EQU.fits.gz',
-        'airmass_z': 'y3a2_z_o.4096_t.32768_AIRMASS.WMEAN_EQU.fits.gz',
+        #'airmass_g': 'y3a2_g_o.4096_t.32768_AIRMASS.WMEAN_EQU.fits.gz',
+        #'airmass_r': 'y3a2_r_o.4096_t.32768_AIRMASS.WMEAN_EQU.fits.gz',
+        #'airmass_i': 'y3a2_i_o.4096_t.32768_AIRMASS.WMEAN_EQU.fits.gz',
+        #'airmass_z': 'y3a2_z_o.4096_t.32768_AIRMASS.WMEAN_EQU.fits.gz',
         #'sig_zp_g' : 'y3a2_g_o.4096_t.32768_SIGMA_MAG_ZERO.QSUM_EQU.fits.gz',
         #'sig_zp_r' : 'y3a2_r_o.4096_t.32768_SIGMA_MAG_ZERO.QSUM_EQU.fits.gz',
-        'sig_zp_i' : 'y3a2_i_o.4096_t.32768_SIGMA_MAG_ZERO.QSUM_EQU.fits.gz',
+        #'sig_zp_i' : 'y3a2_i_o.4096_t.32768_SIGMA_MAG_ZERO.QSUM_EQU.fits.gz',
         #'sig_zp_z' : 'y3a2_z_o.4096_t.32768_SIGMA_MAG_ZERO.QSUM_EQU.fits.gz',
-        'skyvar_i': 'y3a2_i_o.4096_t.32768_SKYVAR.UNCERTAINTY_EQU.fits.gz',
-        'skybrite_i' : 'y3a2_i_o.4096_t.32768_SKYBRITE.WMEAN_EQU.fits.gz',
-        'exp_time_i' : 'y3a2_i_o.4096_t.32768_EXPTIME.SUM_EQU.fits.gz',
+        #'skyvar_i': 'y3a2_i_o.4096_t.32768_SKYVAR.UNCERTAINTY_EQU.fits.gz',
+        #'skybrite_i' : 'y3a2_i_o.4096_t.32768_SKYBRITE.WMEAN_EQU.fits.gz',
+        #'exp_time_i' : 'y3a2_i_o.4096_t.32768_EXPTIME.SUM_EQU.fits.gz',
         #'airmass_i': 'y3a2_i_o.4096_t.32768_AIRMASS.WMEAN_EQU.fits.gz'
 #         'det_frac_i' : 'y3a2_griz_o.4096_t.32768_coverfoot_EQU.fits.gz'
 #         'stellar_density' : 'psf_stellar_density_fracdet_binned_1024_nside_4096_cel.fits.gz'
@@ -221,11 +226,24 @@ bal_in_gld_pixels = np.isin(bal_pix_indices, gld_pix_indices)
 Nbal_before = len(bal)
 bal = bal[bal_in_gld_pixels]
 
-Nbal_after = len(bal)
-Ngld_after = len(gld)
+Nbal = len(bal)
+Ngld = len(gld)
 
-print(f'Balrog objects before & after selecting common pixels: {Nbal_before} -> {Nbal_after}')
-print(f'GOLD objects before & after selecting common pixels: {Ngld_before} -> {Ngld_after}')
+print(f'Balrog objects before & after selecting common pixels: {Nbal_before} -> {Nbal}')
+print(f'GOLD objects before & after selecting common pixels: {Ngld_before} -> {Ngld}')
+
+# -------------------------------------------------------------
+# Bootstrap Samples
+
+if error_type == 'bootstrap':
+    if use_cached_bootstrap is False:
+        map_plots.calc_bootstrap_samples(bal, gld, mapfiles, Nsamples,
+                                         remove_stars=remove_stars,
+                                         vb=vb, vb_iter=vb_iter)
+
+    # In future, can auto detect this
+    #else:
+    #    pass
 
 # -------------------------------------------------------------
 # Plots
@@ -241,9 +259,7 @@ if run_name is not None:
 
 if 'density' in make_plots:
     print('Starting density plots')
-    density_xlim = bin_info.density_xlim
-    density_dx = bin_info.density_dx
-    map_plots.plot_map_densities(mapfiles, bal, gld, xlim=density_xlim, dx=density_dx,
+    map_plots.plot_map_densities(mapfiles, bal, gld,
                                  outdir=plot_outdir, vb=vb, show=show_plots,
                                  nside=NSIDE_OUT, remove_stars=remove_stars)
 
@@ -251,8 +267,7 @@ if 'density' in make_plots:
 
 if 'trends' in make_plots:
     print('Starting trend plots')
-    trend_xlim = bin_info.trend_xlim
-    trend_dx = bin_info.trend_dx
-    map_plots.plot_map_trends(mapfiles, bal, gld, xlim=trend_xlim, dx=trend_dx,
+    map_plots.plot_map_trends(mapfiles, bal, gld,
                               outdir=plot_outdir, vb=vb, show=show_plots,
-                              nside=NSIDE_OUT, remove_stars=remove_stars)
+                              nside=NSIDE_OUT, remove_stars=remove_stars,
+                              error_type=error_type, Nsamples=Nsamples)
