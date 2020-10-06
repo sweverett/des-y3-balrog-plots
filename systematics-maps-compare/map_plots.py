@@ -19,15 +19,14 @@ def plot_map_densities(mapfiles, bal, gld,
     xlim = bin_info.density_xlim
     dx = bin_info.density_dx
     
-    Nrows, Ncols = 3, 4
+    Nmaps = len(mapfiles)
+    Nrows, Ncols = int(np.ceil(Nmaps / 4)), 4
     
     fig, axes = plt.subplots(nrows=Nrows, ncols=Ncols)
     
     histtype = 'step'
     alpha = 0.75
     lw = 2
-    
-    Nmaps = len(mapfiles)
     
     axes = []
     
@@ -48,11 +47,6 @@ def plot_map_densities(mapfiles, bal, gld,
             axes.append(plt.subplot(Nrows, Ncols, k))
             
         plt.setp(axes[k-1].get_yticklabels(), visible=False)
-            
-        if (xlim[mname] is None):
-            bins = 30
-        else:
-            bins = np.arange(xlim[mname][0], xlim[mname][1]+dx[mname], dx[mname])
 
         # Multiply some quantities by a scale factor
         if 'sig_zp' in mname:
@@ -60,6 +54,11 @@ def plot_map_densities(mapfiles, bal, gld,
         else:
             sf = 1.
             
+        if (xlim[mname] is None):
+            bins = 30
+        else:
+            bins = np.arange(sf*xlim[mname][0], sf*xlim[mname][1]+sf*dx[mname], sf*dx[mname])
+
         plt.hist(sf*bal[mname], bins=bins, label=lbal, density=True, histtype=histtype, alpha=alpha, lw=lw)
         plt.hist(sf*gld[mname], bins=bins, label=lgld, density=True, histtype=histtype, alpha=alpha, lw=lw)
         
@@ -131,15 +130,14 @@ def plot_map_trends(mapfiles, bal, gld,
     xlim = bin_info.trend_xlim
     dx = bin_info.trend_dx
 
-    Nrows, Ncols = 3, 4
+    Nmaps = len(mapfiles)
+    Nrows, Ncols = int(np.ceil(Nmaps / 4)), 4
     
     fig, axes = plt.subplots(nrows=Nrows, ncols=Ncols)
     
     histtype = 'step'
     alpha = 0.75
     lw = 2
-    
-    Nmaps = len(mapfiles)
     
     axes = []
 
