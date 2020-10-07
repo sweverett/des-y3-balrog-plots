@@ -141,3 +141,6 @@ trend_dx = {
     'exp_time_i' : 100,
     'exp_time_z' : 100
 }
+
+# Used for a constant number of bins in trend plots if not using dx_trends
+Nxbins = 12

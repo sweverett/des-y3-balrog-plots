@@ -103,7 +103,7 @@ def plot_map_densities(mapfiles, bal, gld,
     return
 
 def plot_map_trends(mapfiles, bal, gld,
-                    w=0.35, h=0.5, s=[20, 24], show=True, vb=False,
+                    w=0.3, h=0.5, s=[20, 24], show=True, vb=False,
                     nside=None, remove_stars=False,
                     outdir='plots', outfile='systematics-trend-compare.png',
                     error_type='poisson', Nsamples=None):
@@ -163,7 +163,11 @@ def plot_map_trends(mapfiles, bal, gld,
         if (xlim[mname] is None):
             bins = 30
         else:
-            bins = np.arange(xlim[mname][0], xlim[mname][1]+dx[mname], dx[mname])
+            # For now, ignore dx value and force Nxbins points
+            bmin = xlim[mname][0]
+            bmax = xlim[mname][1]
+            bdx = (bmax - bmin) / bin_info.Nxbins
+            bins = np.arange(bmin, bmax+bdx, bdx)
             
         N = len(bins)-1
         bal_ratio[mname] = np.zeros(N)
@@ -370,10 +374,18 @@ def calc_bootstrap_samples(bal, gld, mapfiles, Nsamples,
                 Nmean_bal = len(s_bal) / len(np.unique(s_bal[f'{mname}_index']))
                 Nmean_gld = len(s_gld) / len(np.unique(s_gld[f'{mname}_index']))
                  
+            #if (xlim[mname] is None):
+            #    bins = 10
+            #else:
+            #    bins = np.arange(xlim[mname][0], xlim[mname][1]+dx[mname], dx[mname])
             if (xlim[mname] is None):
-                bins = 10
+                bins = 30
             else:
-                bins = np.arange(xlim[mname][0], xlim[mname][1]+dx[mname], dx[mname])
+                # For now, ignore dx value and force Nxbins points
+                bmin = xlim[mname][0]
+                bmax = xlim[mname][1]
+                bdx = (bmax - bmin) / bin_info.Nxbins
+                bins = np.arange(bmin, bmax+bdx, bdx)
                 
             Nbins = len(bins)-1
             bal_ratio = np.zeros(Nbins)
@@ -395,8 +407,15 @@ def calc_bootstrap_samples(bal, gld, mapfiles, Nsamples,
                 bal_base_mean = (Npixels_bal * Nmean_bal)
                 gld_base_mean = (Npixels_gld * Nmean_gld)
 
-                bal_ratio[j] = len(bal[bal_in_bin]) / bal_base_mean
-                gld_ratio[j] = len(gld[gld_in_bin]) / gld_base_mean
+                try:
+                    bal_ratio[j] = len(bal[bal_in_bin]) / bal_base_mean
+                except:
+                    bal_ratio[j] = np.nan
+                try:
+                    gld_ratio[j] = len(gld[gld_in_bin]) / gld_base_mean
+                except:
+                    gld_ratio[j] = np.nan
+
                 bin_mean[j] = np.mean([b1, b2])
                 
                 j += 1
