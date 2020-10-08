@@ -106,7 +106,7 @@ def plot_map_trends(mapfiles, bal, gld,
                     w=0.3, h=0.5, s=[20, 24], show=True, vb=False,
                     nside=None, remove_stars=False,
                     outdir='plots', outfile='systematics-trend-compare.png',
-                    error_type='poisson', Nsamples=None):
+                    error_type='poisson', Nsamples=None, cache_trends=True):
 
     if remove_stars is False:
         stars_dir = ''
@@ -193,7 +193,7 @@ def plot_map_trends(mapfiles, bal, gld,
                 print(f'Npixels_bal = {Npixels_bal}')
                 print(f'Npixels_gld = {Npixels_gld}')
                 raise e
-
+            
             bal_base_mean = (Npixels_bal * Nmean_bal)
             gld_base_mean = (Npixels_gld * Nmean_gld)
             
@@ -213,7 +213,7 @@ def plot_map_trends(mapfiles, bal, gld,
                 gld_err[mname][j] = np.sqrt(len(gld[gld_in_bin])) / gld_base_mean
             
             j += 1
-
+            
         if error_type == 'bootstrap':
             bal_err[mname] = bal_boot_std[mname]
             gld_err[mname] = gld_boot_std[mname]
@@ -239,7 +239,7 @@ def plot_map_trends(mapfiles, bal, gld,
             sf = 1000.
         else:
             sf = 1.
-        
+                        
         plt.errorbar(sf*bin_mean[mname], bal_ratio[mname], bal_err[mname], label=lbal, lw=2, marker='o', zorder=10)
         plt.errorbar(sf*bin_mean[mname], gld_ratio[mname], gld_err[mname], label=lgld, lw=2, marker='o', color='k', zorder=5)
         plt.axhline(1, lw=3, ls='--', c='k')
@@ -265,6 +265,12 @@ def plot_map_trends(mapfiles, bal, gld,
     if not os.path.exists(outdir):
         os.mkdir(outdir)
 
+    # If we want to use the results later, cache them.
+    if cache_trends:
+        trend_outfile = os.path.join(os.path.dirname(outfile),'trend-tables-{nside}.npz')
+        np.savez(trend_outfile,bin_mean=bin_mean,bal_ratio=bal_ratio,bal_err=bal_err,gld_ratio=gld_ratio,gld_err=gld_err)
+
+        
     title = ''
     if nside is not None:
         title = str(nside)
