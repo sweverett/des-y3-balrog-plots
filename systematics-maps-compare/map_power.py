@@ -50,7 +50,7 @@ def get_property_map(map_key, nside=2048, mapdir = '/data/des81.a/data/severett/
 
     return hmap
 
-def estimate_bandpowers(hmap,maskval = hp.UNSEEN,nest=True,nside=2048,apodize = True,aposcale = 0.1,nbins=32):
+def estimate_bandpowers(hmap,maskval = hp.UNSEEN,nest=True,nside=2048,apodize = True,aposcale = 0.1,nbins=32,work=None):
     bins = nmt.NmtBin.from_nside_linear(nside, nbins)
     # First, check whether map is NEST or RING. If NEST, re-order.
     if nest:
@@ -62,13 +62,19 @@ def estimate_bandpowers(hmap,maskval = hp.UNSEEN,nest=True,nside=2048,apodize = 
     # Apodize mask?? 
     if apodize:
         mask = nmt.mask_apodization(mask, aposcale)
-
+    
     # Once we've got an acceptable mask, remove the monopole.
     hmap[mask > 0] = hmap[mask > 0] - np.average(hmap[mask>0],weights=mask[mask>0])
     field = nmt.NmtField(mask,hmap[np.newaxis,:])
-    cl = nmt.compute_full_master(field,field,bins) 
+    if work == None:
+        w = nmt.NmtWorkspace()
+        w.compute_coupling_matrix(field,field,bins)
+    else:
+        w=work
+
+    cl = nmt.compute_full_master(field,field,bins,workspace=w)
     l_eff = bins.get_effective_ells()
-    return l_eff,cl
+    return l_eff,cl,w
 
 
 if __name__ == '__main__':
@@ -79,24 +85,30 @@ if __name__ == '__main__':
     bin_means = tables_loader['bin_mean'].reshape(-1)[0]
     bal_ratio = tables_loader['bal_ratio'].reshape(-1)[0]
     gold_ratio = tables_loader['gld_ratio'].reshape(-1)[0]
-
-    for key in bin_means.keys():
+    work=None
+    for i,key in enumerate(bin_means.keys()):
         hmap = get_property_map(key)
         print(f"estimating power spectrum for {key}")
         hmap_ngal = get_synthetic_map(bin_means[key],gold_ratio[key],hmap)
         hmap_nbal = get_synthetic_map(bin_means[key],bal_ratio[key],hmap)
-        l,cl_hmap = estimate_bandpowers(hmap)
-        l,cl_ngal = estimate_bandpowers(hmap_ngal)
-        l,cl_nbal = estimate_bandpowers(hmap_nbal)
-        fig,ax1 = plt.subplots(nrows=1,ncols=1,figsize=(7,7))
+        l,cl_hmap,work = estimate_bandpowers(hmap,work=work)
+        l,cl_ngal,work = estimate_bandpowers(hmap_ngal,work=work)
+        l,cl_nbal,work = estimate_bandpowers(hmap_nbal,work=work)
+        fig,(ax1,ax2) = plt.subplots(nrows=1,ncols=2,figsize=(14,6))
         ax1.plot(l,l*(l+1)*cl_hmap[0,:]/2/np.pi,label=f'{key}')
-        ax1.plot(l,l*(l+1)*cl_ngal[0,:]/2/np.pi,label=f'Gold response')
-        ax1.plot(l,l*(l+1)*cl_nbal[0,:]/2/np.pi,label=f'Balrog response')
-        ax1.set_xscale('log')
-        ax1.set_yscale('log')
         ax1.set_xlabel('$\\ell$', fontsize=16)
         ax1.set_ylabel('$(\\ell(\\ell+1)C_\\ell/2\\pi$', fontsize=16)
         ax1.set_title(f'{key} power spectrum')
+        ax1.set_xscale('log')
+        ax1.set_yscale('log')
+
+        ax2.plot(l,l*(l+1)*cl_ngal[0,:]/2/np.pi,label=f'Gold response')
+        ax2.plot(l,l*(l+1)*cl_nbal[0,:]/2/np.pi,label=f'Balrog response')
+        ax2.set_xlabel('$\\ell$', fontsize=16)
+        ax2.set_ylabel('$(\\ell(\\ell+1)C_\\ell/2\\pi$', fontsize=16)
+        ax2.set_title(f'{key} Balrog response power spectrum')
+        ax2.set_xscale('log')
+        ax2.set_yscale('log')
         plt.legend(loc='best')
         #ax1.set_ylim(0,1e-4)
         '''
