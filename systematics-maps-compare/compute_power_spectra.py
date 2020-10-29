@@ -7,11 +7,19 @@ import glob
 import os
 import astropy.table
 import ipdb
+from scipy.interpolate import interp1d
 
 nside=2048
 map_path = f'/data/des81.a/data/severett/paper-plots/desy3-balrog-plots/systematics-maps-compare/maps/{nside}'
 wsp_path = None
 def get_synthetic_map(bin_means,binned_map_values,map_values):
+    if np.sum(~np.isfinite(binned_map_values)) > 0:
+        #reinterpolate the missing values.
+        good = np.isfinite(binned_map_values)
+        bad = ~good
+        f = interp1d(bin_means[good],binned_map_values[good],fill_value='extrapolate')
+        binned_map_values[bad] = f(bin_means[bad])
+                                   
     interp_map_values = np.interp(map_values,bin_means,binned_map_values)
     return interp_map_values
 
@@ -55,7 +63,6 @@ for i, fname in enumerate(map_filelist):
     key = f'{sys_name.lower()}_{band_name}'
     if 'exptime' in key:
         key = key.replace('exptime', 'exp_time')
-        ipdb.set_trace()
     if 'sig' in key:
         key = f'sig_zp_{band_name}'
     hmap_ngal = get_synthetic_map(bin_means[key],gold_ratio[key],hmap)
@@ -90,6 +97,6 @@ for i, fname in enumerate(map_filelist):
     plt.tight_layout() 
     f.savefig('{band_name}_{sys_name}.pdf')
     #plt.show()
-    plt.clear(f)
+    plt.close(f)
 tab  = astropy.table.Table(cls_out)
 tab.write(f'Cls_sysmap_balrog_gold_{nside}.fits.gz', overwrite=True)
