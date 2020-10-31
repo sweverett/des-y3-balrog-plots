@@ -294,7 +294,7 @@ if error_type == 'bootstrap':
 # Plots
 
 # Can adjust this for atypical runs
-plot_outdir_base = 'plots' #/my-special/run/
+plot_outdir_base = 'plots'
 plot_outdir = os.path.join(plot_outdir_base, str(NSIDE_OUT))
 
 if run_name is not None:

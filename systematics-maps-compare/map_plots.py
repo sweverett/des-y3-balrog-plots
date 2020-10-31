@@ -309,7 +309,8 @@ def plot_map_trends(mapfiles, bal, gld,
 
     # If we want to use the results later, cache them.
     if cache_trends:
-        trend_outfile = os.path.join(os.path.dirname(outfile),f'trend-tables-{nside}.npz')
+        trend_outfile = os.path.join(outdir, f'trend-tables-{nside}.npz')
+        print(f'Caching trend to {trend_outfile}...')
         np.savez(trend_outfile,bin_mean=bin_mean,bal_ratio=bal_ratio,bal_err=bal_err,gld_ratio=gld_ratio,gld_err=gld_err)
         
     title = ''
