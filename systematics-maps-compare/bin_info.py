@@ -146,5 +146,5 @@ trend_dx = {
 Nxbins = 12
 
 # percentile info
-percentile_min = 1
-percentile_max = 99
+percentile_min = 2
+percentile_max = 98
