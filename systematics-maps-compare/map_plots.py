@@ -117,7 +117,7 @@ def plot_map_trends(mapfiles, bal, gld,
                     w=0.3, h=0.5, s=[20, 24], show=True, vb=False,
                     nside=None, remove_stars=False, use_percentiles=True,
                     outdir='plots', outfile='systematics-trend-compare.png',
-                    error_type='poisson', Nsamples=None, cache_trends=True):
+                    error_type='poisson', Nsamples=None, cache_trends=True,
                     plot_densities=True):
 
     if remove_stars is False:
