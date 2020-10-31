@@ -106,7 +106,8 @@ def plot_map_trends(mapfiles, bal, gld,
                     w=0.3, h=0.5, s=[20, 24], show=True, vb=False,
                     nside=None, remove_stars=False,
                     outdir='plots', outfile='systematics-trend-compare.png',
-                    error_type='poisson', Nsamples=None):
+                    error_type='poisson', Nsamples=None,
+                    plot_densities=True):
 
     if remove_stars is False:
         stars_dir = ''
@@ -243,7 +244,7 @@ def plot_map_trends(mapfiles, bal, gld,
         plt.errorbar(sf*bin_mean[mname], bal_ratio[mname], bal_err[mname], label=lbal, lw=2, marker='o', zorder=10)
         plt.errorbar(sf*bin_mean[mname], gld_ratio[mname], gld_err[mname], label=lgld, lw=2, marker='o', color='k', zorder=5)
         plt.axhline(1, lw=3, ls='--', c='k')
-        
+
         if 'sig_zp' in mname:
             xl = f'{mname} (mmag)'
         else:
@@ -258,6 +259,25 @@ def plot_map_trends(mapfiles, bal, gld,
             
         axes[k-1].patch.set_edgecolor('black')  
         axes[k-1].patch.set_linewidth('2')
+
+        if plot_densities is True:
+            dmin = sf*bin_info.density_xlim[mname][0]
+            dmax = sf*bin_info.density_xlim[mname][1]
+            ddx = sf*bin_info.density_dx[mname]
+            dbins = np.arange(dmin, dmax+ddx, ddx)
+
+            bal_h, *_ = np.histogram(sf*bal[mname], bins=dbins, density=True)
+            density_ymax = np.max(bal_h)
+            trend_ymax = np.max(bal_ratio[mname])
+
+            # Now rescale density histogram
+            #scaled_density = (bal_h) * (0.85 * trend_ymax) / density_ymax
+
+            # Since they are extremely similar, we only plot one to indicate overall shape of dist
+            ax2 = plt.gca().twinx()
+            ax2.hist(sf*bal[mname], bins=dbins, density=True, alpha=0.1, color='green')
+            ax2.set_xticks([], [])
+            ax2.set_yticks([], [])
         
     plt.subplots_adjust(wspace=w, hspace=h)
     plt.gcf().set_size_inches(s[0], s[1])
