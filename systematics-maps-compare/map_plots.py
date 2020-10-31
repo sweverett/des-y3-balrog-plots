@@ -12,12 +12,16 @@ sb.set_context("notebook", font_scale=1.5)
 
 def plot_map_densities(mapfiles, bal, gld, 
                        w=0.15, h=0.5, s=[16, 24], show=True, vb=False,
-                       nside=None, remove_stars=False,
+                       nside=None, remove_stars=False, use_percentiles=True,
                        outdir='plots', outfile='systematics-density-compare.png'):
     sb.set_style('whitegrid')
 
-    xlim = bin_info.density_xlim
-    dx = bin_info.density_dx
+    if use_percentiles is True:
+        xlim = {}
+        dx = {}
+    else:
+        xlim = bin_info.density_xlim
+        dx = bin_info.density_dx
     
     Nmaps = len(mapfiles)
     Nrows, Ncols = int(np.ceil(Nmaps / 4)), 4
@@ -47,6 +51,13 @@ def plot_map_densities(mapfiles, bal, gld,
             axes.append(plt.subplot(Nrows, Ncols, k))
             
         plt.setp(axes[k-1].get_yticklabels(), visible=False)
+
+        if use_percentiles is True:
+            pmin, pmax = bin_info.percentile_min, bin_info.percentile_max
+            xlim[mname] = []
+            xlim[mname].append(np.percentile(gld[mname], pmin))
+            xlim[mname].append(np.percentile(gld[mname], pmax))
+            dx[mname] = 1. * abs(xlim[mname][1] - xlim[mname][0]) / bin_info.Nxbins
 
         # Multiply some quantities by a scale factor
         if 'sig_zp' in mname:
@@ -104,7 +115,7 @@ def plot_map_densities(mapfiles, bal, gld,
 
 def plot_map_trends(mapfiles, bal, gld,
                     w=0.3, h=0.5, s=[20, 24], show=True, vb=False,
-                    nside=None, remove_stars=False,
+                    nside=None, remove_stars=False, use_percentiles=True,
                     outdir='plots', outfile='systematics-trend-compare.png',
                     error_type='poisson', Nsamples=None,
                     plot_densities=True):
@@ -128,8 +139,12 @@ def plot_map_trends(mapfiles, bal, gld,
 
     sb.set_style('whitegrid')
 
-    xlim = bin_info.trend_xlim
-    dx = bin_info.trend_dx
+    if use_percentiles is True:
+        xlim = {}
+        dx = {}
+    else:
+        xlim = bin_info.trend_xlim
+        dx = bin_info.trend_dx
 
     Nmaps = len(mapfiles)
     Nrows, Ncols = int(np.ceil(Nmaps / 4)), 4
@@ -160,6 +175,13 @@ def plot_map_trends(mapfiles, bal, gld,
             # Is the same for every map, given a sample
             Nmean_bal = len(bal) / len(np.unique(bal[f'{mname}_index']))
             Nmean_gld = len(gld) / len(np.unique(gld[f'{mname}_index']))
+
+        if use_percentiles is True:
+            pmin, pmax = bin_info.percentile_min, bin_info.percentile_max
+            xlim[mname] = []
+            xlim[mname].append(np.percentile(gld[mname], pmin))
+            xlim[mname].append(np.percentile(gld[mname], pmax))
+            dx[mname] = 1. * abs(xlim[mname][1] - xlim[mname][0]) / bin_info.Nxbins
              
         if (xlim[mname] is None):
             bins = 30
@@ -305,6 +327,7 @@ def plot_map_trends(mapfiles, bal, gld,
 
 def calc_bootstrap_samples(bal, gld, mapfiles, Nsamples,
                            outdir='./samples/', remove_stars=None,
+                           use_percentiles=True,
                            vb=True, vb_iter=False):
 
     if remove_stars is None:
@@ -324,8 +347,12 @@ def calc_bootstrap_samples(bal, gld, mapfiles, Nsamples,
     if not os.path.exists(outdir):
         os.mkdir(outdir)
 
-    xlim = bin_info.trend_xlim
-    dx = bin_info.trend_dx
+    if use_percentiles is True:
+        xlim = {}
+        dx = {}
+    else:
+        xlim = bin_info.trend_xlim
+        dx = bin_info.trend_dx
 
     bal_ratios = {}
     gld_ratios = {}
@@ -394,10 +421,13 @@ def calc_bootstrap_samples(bal, gld, mapfiles, Nsamples,
                 Nmean_bal = len(s_bal) / len(np.unique(s_bal[f'{mname}_index']))
                 Nmean_gld = len(s_gld) / len(np.unique(s_gld[f'{mname}_index']))
                  
-            #if (xlim[mname] is None):
-            #    bins = 10
-            #else:
-            #    bins = np.arange(xlim[mname][0], xlim[mname][1]+dx[mname], dx[mname])
+            if use_percentiles is True:
+                pmin, pmax = bin_info.percentile_min, bin_info.percentile_max
+                xlim[mname] = []
+                xlim[mname].append(np.percentile(gld[mname], pmin))
+                xlim[mname].append(np.percentile(gld[mname], pmax))
+                dx[mname] = 1. * abs(xlim[mname][1] - xlim[mname][0]) / bin_info.Nxbins
+
             if (xlim[mname] is None):
                 bins = 30
             else:

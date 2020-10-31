@@ -25,7 +25,7 @@ if error_type == 'poisson':
     Nsamples = None
 
 bal_file = '/data/des81.a/data/severett/paper-plots/cats/gold-compare/balrog_sof_galaxy_compare.fits'
-gld_cache_file = '/data/des81.a/data/severett/paper-plots/cats/systematics-maps-compare/y3_gold_2_2_sof_basic_systematics_collated.fits'
+gld_cache_file = '/data/des81.a/data/severett/paper-plots/cats/systematics-maps-compare/y3_gold_2_2_systematics_and_zp_corr_collated.fits'
 
 # Smaller, has no mag cols
 #gld_cache_file = '/data/des81.a/data/severett/paper-plots/cats/systematics-maps-compare/y3_gold_2_2_galaxy_compare_healpy.fits'
@@ -164,14 +164,34 @@ for mname, mfile in maps.items():
         mfile = mfile.replace(str(NSIDE_MAP), str(NSIDE_OUT))
         mapfiles[mname] = os.path.join(mapdir, str(NSIDE_OUT), mfile)
 
+# Some col defs
+bal_m_col = 'meas_cm_mag_deredden'
+gld_m_col = 'SOF_CM_MAG_CORRECTED'
+ext_col = 'EXTENDED_CLASS_SOF'
+
+# maglim def
+bindx = dict(zip('griz', range(4)))
+b = 'i'
+bi = bindx[b]
+mmin = 17.5
+mmax = 21.5
+
 # Read in same catalogs as galaxy-compare:
 print('Reading Balrog...')
-bal_cols = ['meas_ra', 'meas_dec', 'meas_tilename', 'meas_EXTENDED_CLASS_SOF']
+bal_cols = ['meas_ra', 'meas_dec', 'meas_tilename', f'meas_{ext_col}']
+
+if use_maglim_sample is True:
+    bal_cols.append(bal_m_col)
+
 bal = Table(fitsio.read(bal_file, columns=bal_cols))
 
 print('Reading GOLD...')
 try:
-    gld_cols = ['RA', 'DEC', 'TILENAME', 'EXTENDED_CLASS_SOF']
+    gld_cols = ['RA', 'DEC', 'TILENAME', ext_col]
+
+    if use_maglim_sample is True:
+        gld_cols.append(gld_m_col+f'_{b.upper()}')
+
     gld = Table(fitsio.read(gld_cache_file, columns=gld_cols))
 
 except OSError:
@@ -199,22 +219,15 @@ except OSError:
 
 # Optional: Cut to maglim-like sample
 if use_maglim_sample is True:
-    bindx = dict(zip('griz', range(4)))
-    b, bi = 'i', bindx[b]
-    mmmin, mmax = 17.5, 21.5
-    bal_m_col = 'meas_cm_mag_deredden'
-    gld_m_col = 'SOF_CM_MAG_CORRECTED'
-    ext_col = 'EXTENDED_CLASS_SOF'
-
     bal = bal[
-             (bal[f'meas_{ext_col}'] == 3]) &
-             (bal[bal_m_col] >= mmin]) &
-             (bal[bal_m_col] <= mmax])
+             (bal[f'meas_{ext_col}'] == 3) &
+             (bal[bal_m_col][:,bi] >= mmin) &
+             (bal[bal_m_col][:,bi] <= mmax)
     ]
     gld = gld[
-             (gld[ext_col] == 3]) &
-             (gld[gld_m_col+f'_{b.upper()}'] >= mmin]) &
-             (gld[gld_m_col+f'_{b.upper()}'] <= mmax])
+             (gld[ext_col] == 3) &
+             (gld[gld_m_col+f'_{b.upper()}'] >= mmin) &
+             (gld[gld_m_col+f'_{b.upper()}'] <= mmax)
     ]
 else:
     # Optional: Remove stars

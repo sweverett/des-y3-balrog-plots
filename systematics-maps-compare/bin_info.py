@@ -144,3 +144,7 @@ trend_dx = {
 
 # Used for a constant number of bins in trend plots if not using dx_trends
 Nxbins = 12
+
+# percentile info
+percentile_min = 1
+percentile_max = 99
