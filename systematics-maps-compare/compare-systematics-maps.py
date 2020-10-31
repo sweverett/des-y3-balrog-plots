@@ -9,12 +9,12 @@ import bin_info
 
 import pdb
 
-#make_plots = ['density', 'trends']
-make_plots = ['trends']
+make_plots = ['density', 'trends']
+#make_plots = ['trends']
 
 show_plots = False
 
-run_name = 'gals_poisson_all'
+run_name = 'maglim_sample'
 
 error_type = 'poisson'
 #error_type = 'bootstrap'
@@ -25,13 +25,19 @@ if error_type == 'poisson':
     Nsamples = None
 
 bal_file = '/data/des81.a/data/severett/paper-plots/cats/gold-compare/balrog_sof_galaxy_compare.fits'
-gld_cache_file = '/data/des81.a/data/severett/paper-plots/cats/systematics-maps-compare/y3_gold_2_2_galaxy_compare_healpy.fits'
+gld_cache_file = '/data/des81.a/data/severett/paper-plots/cats/systematics-maps-compare/y3_gold_2_2_sof_basic_systematics_collated.fits'
+
+# Smaller, has no mag cols
+#gld_cache_file = '/data/des81.a/data/severett/paper-plots/cats/systematics-maps-compare/y3_gold_2_2_galaxy_compare_healpy.fits'
 
 vb = True
 vb_iter = True
-overwrite = True
+overwrite = False
 
 remove_stars = True # Cut on EXTENDED_CLASS_SOF > 1
+
+# This cuts on EXTENDED_CLASS_SOF==3 & 17.5 < i_mag < 21.5
+use_maglim_sample = True 
 
 NSIDE_MAP = 4096
 NSIDE_OUT = 2048
@@ -191,15 +197,34 @@ except OSError:
 
     print('GOLD catalog w/ Balrog mask written!')
 
-# Optional: Remove stars
-if remove_stars is True:
-    bal = bal[bal['meas_EXTENDED_CLASS_SOF'] > 1]
-    gld = gld[gld['EXTENDED_CLASS_SOF'] > 1]
-else:
-    # Still want to remove -9's
-    bal = bal[bal['meas_EXTENDED_CLASS_SOF'] >= 0]
-    gld = gld[gld['EXTENDED_CLASS_SOF'] >= 0]
+# Optional: Cut to maglim-like sample
+if use_maglim_sample is True:
+    bindx = dict(zip('griz', range(4)))
+    b, bi = 'i', bindx[b]
+    mmmin, mmax = 17.5, 21.5
+    bal_m_col = 'meas_cm_mag_deredden'
+    gld_m_col = 'SOF_CM_MAG_CORRECTED'
+    ext_col = 'EXTENDED_CLASS_SOF'
 
+    bal = bal[
+             (bal[f'meas_{ext_col}'] == 3]) &
+             (bal[bal_m_col] >= mmin]) &
+             (bal[bal_m_col] <= mmax])
+    ]
+    gld = gld[
+             (gld[ext_col] == 3]) &
+             (gld[gld_m_col+f'_{b.upper()}'] >= mmin]) &
+             (gld[gld_m_col+f'_{b.upper()}'] <= mmax])
+    ]
+else:
+    # Optional: Remove stars
+    if remove_stars is True:
+        bal = bal[bal['meas_EXTENDED_CLASS_SOF'] > 1]
+        gld = gld[gld['EXTENDED_CLASS_SOF'] > 1]
+    else:
+        # Still want to remove -9's
+        bal = bal[bal['meas_EXTENDED_CLASS_SOF'] >= 0]
+        gld = gld[gld['EXTENDED_CLASS_SOF'] >= 0]
 
 # Add maps to catalogs
 
