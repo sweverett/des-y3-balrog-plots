@@ -41,7 +41,7 @@ if __name__ == "__main__":
     tile_lists = np.array_split(tilenames,njack)
     nbins = 25
     detfrac_array = np.zeros((njack,nbins))
-    
+    ipdb.set_trace()
     band_detfracs = np.zeros((4,nbins))
     fig,ax = plt.subplots(nrows=1,ncols=1,figsize=(7,5))
     for i,iband in enumerate(['g','r','i','z']):
