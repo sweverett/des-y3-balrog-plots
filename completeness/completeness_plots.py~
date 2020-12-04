@@ -1,0 +1,47 @@
+import numpy as np
+import fitsio
+import matplotlib.pyplot as plt
+import os
+import ipdb
+
+stacked_catalog_path = "/data/des41.b/data/severett/Balrog/y3-merged/stacked_catalogs/1.2/sof/"
+truecat_file = "balrog_detection_catalog_sof_y3-merged_v1.2.fits"
+obscat_file = "balrog_matched_catalog_sof_y3-merged_v1.2.fits"
+
+def completeness(catalog,comparison_type = 'sof_magnitude', band = 'i',nbins=25):
+    bands = ['g','r','i','z']
+    bin_edges = np.linspace(15,27,nbins+1)
+    bin_centers = (bin_edges[1:] + bin_edges[:-1])/2.
+    detfrac = np.zeros(nbins)
+    if comparison_type is 'sof_magnitude':
+        for i in range(nbins):
+            all_these = (catalog['true_bdf_mag_deredden'][:,bands.index(band)] >  bin_edges[i]) &  \
+                        (catalog['true_bdf_mag_deredden'][:,bands.index(band)] <= bin_edges[i+1])
+            if np.sum(all_these) > 0:
+                detected = np.sum(catalog[all_these]['detected']) 
+                detfrac[i] = np.sum(detected) * 1./np.sum(all_these)
+        return bin_centers, detfrac
+
+def select_catalog(pop = 'all', exclude_match = True):
+    #obs = fitsio.read(os.path.join(stacked_catalog_path,truecat_file))
+    truth = fitsio.read(os.path.join(stacked_catalog_path,truecat_file))
+    tkeep = (truth['flags_footprint'] > 0) & (truth['flags_foreground'] == 0) & (truth['flags_badregions'] == 0)
+    #okeep = (  obs['flags_footprint'] == 0) & (  obs['flags_foreground'] == 0) & (  obs['flags_badregions'] == 0)
+    if exclude_match:
+        tkeep = tkeep & ( truth['match_flag_1.5_asec'] <2 )
+    return truth[tkeep]
+
+
+if __name__ == "__main__":
+
+    cat = select_catalog(pop='galaxies')
+    bins, detfrac = completeness(cat)
+    xhsc, detfrac_hsc =np.loadtxt("HSC.dat",unpack=True,skiprows=1)
+    fig,ax = plt.subplots(nrows=1,ncols=1,figsize=(6,5))
+    ax.plot(bins,detfrac)
+    ax.set_ylim(0,1.1)
+    ax.axhline(1.0,color='grey',linestyle='--')
+    fig.savefig('balrog_completeness-galaxies.png')
+    ipdb.set_trace()
+
+    pass

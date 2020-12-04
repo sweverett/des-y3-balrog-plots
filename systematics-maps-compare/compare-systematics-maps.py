@@ -12,6 +12,7 @@ import pdb
 make_plots = ['density', 'trends']
 #make_plots = ['trends']
 
+cache_galaxy_maps = True
 show_plots = False
 
 run_name = 'maglim_sample'
@@ -82,6 +83,18 @@ def hpRaDecToHEALPixel(ra, dec, nside=4096, nest=True):
     theta = (90.0 - dec) * np.pi / 180.0
     hpInd = hp.ang2pix(nside, theta, phi, nest=nest)
     return hpInd
+
+def make_map(catalog, hp_index_tag = 'INDEX', nside=4096):
+    # takes a catalog and healpix map properties.
+    # returns a healpix map of the galaxy density.
+
+    number_of_pixels = hp.nside2npix(nside)
+    pixcounts = np.bincount(catalog.as_array()[hp_index_tag],minlength = number_of_pixels)
+    hpmap = np.zeros(number_of_pixels,dtype=pixcounts.dtype)
+    hpmap = hpmap + pixcounts
+    return hpmap
+
+
 
 def rescale_hp_map(m, NSIDE_MAP, NSIDE_OUT):
 
@@ -299,6 +312,18 @@ plot_outdir = os.path.join(plot_outdir_base, str(NSIDE_OUT))
 
 if run_name is not None:
     plot_outdir = os.path.join(plot_outdir, run_name)
+
+# Cache maps of the galaxy density.
+if cache_galaxy_maps:
+    map_outfile = os.path.join(plot_outdir,'galaxy_maps.fits')
+    print(f"Making maps of galaxy density for Gold and balrog. \n Will write outputs to: {map_outfile}")
+    bal_map = make_map(bal, hp_index_tag = 'skybrite_r_index', nside=4096)
+    gld_map = make_map(gld, hp_index_tag = 'skybrite_r_index', nside=4096)
+    map_arr = np.empty(bal_map.size,dtype=[('balrog_map',np.int),('gold_map',np.int)])
+    map_arr['balrog_map'] = bal_map
+    map_arr['gold_map'] = gld_map
+    fitsio.write(map_outfile,map_arr)
+
 
 # Density plots
 
