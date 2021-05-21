@@ -115,6 +115,6 @@ for i,ikey in enumerate(keys):
 
         
     fig.tight_layout()
-    fig.suptitle(f'{ikey} power spectra comparison'.replace('_',' '))
+    #fig.suptitle(f'{ikey} power spectra comparison'.replace('_',' '))
     fig.savefig(figname)
     plt.close(fig)
